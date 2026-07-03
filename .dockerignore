@@ -1,0 +1,16 @@
+node_modules
+.git
+.gitignore
+.env
+.env.*
+*.md
+dist
+build
+coverage
+.gitkeep
+.gitattributes
+.vscode
+.idea
+*.log
+.DS_Store
+Thumbs.db

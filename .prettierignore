@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+coverage
+.next
+*.db
+*.sql
+*.log
+.env
+.env.*
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
