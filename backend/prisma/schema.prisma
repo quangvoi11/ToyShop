@@ -17,23 +17,17 @@ model User {
   lastName  String
   phone     String?
   avatar    String?
-  role      Role     @default(CUSTOMER)
+  role      String   @default("CUSTOMER")
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cart        Cart?
-  orders      Order[]
-  reviews     Review[]
-  addresses   Address[]
-  wishlist    WishlistItem[]
+  cart         Cart?
+  orders       Order[]
+  reviews      Review[]
+  addresses    Address[]
+  wishlist     WishlistItem[]
   refreshToken String?
-}
-
-enum Role {
-  CUSTOMER
-  ADMIN
-  STAFF
 }
 
 model Address {
@@ -52,6 +46,8 @@ model Address {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders Order[]
+
+  @@index([userId])
 }
 
 // ─── Products & Categories ─────────────────────────────────────
@@ -68,9 +64,11 @@ model Category {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children Category[] @relation("CategoryHierarchy")
   products Product[]
+
+  @@index([parentId])
 }
 
 model Brand {
@@ -104,14 +102,19 @@ model Product {
   categoryId String
   brandId    String?
 
-  category      Category         @relation(fields: [categoryId], references: [id])
-  brand         Brand?           @relation(fields: [brandId], references: [id])
+  category      Category         @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  brand         Brand?           @relation(fields: [brandId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   variants      ProductVariant[]
   images        ProductImage[]
   reviews       Review[]
   cartItems     CartItem[]
   orderItems    OrderItem[]
   wishlistItems WishlistItem[]
+
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([slug])
+  @@index([isActive, isFeatured])
 }
 
 model ProductVariant {
@@ -126,6 +129,8 @@ model ProductVariant {
   updatedAt DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
 }
 
 model ProductImage {
@@ -154,10 +159,11 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([userId, productId])
+  @@index([productId])
 }
 
 // ─── Cart & Wishlist ───────────────────────────────────────────
@@ -168,8 +174,8 @@ model Cart {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items  CartItem[]
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
 }
 
 model CartItem {
@@ -181,10 +187,11 @@ model CartItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cart    Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([cartId, productId, variantId])
+  @@index([cartId])
 }
 
 model WishlistItem {
@@ -194,65 +201,42 @@ model WishlistItem {
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([userId, productId])
+  @@index([userId])
 }
 
 // ─── Orders ────────────────────────────────────────────────────
 
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  PROCESSING
-  SHIPPING
-  DELIVERED
-  CANCELLED
-  REFUNDED
-}
-
-enum PaymentStatus {
-  UNPAID
-  PAID
-  REFUNDED
-  FAILED
-}
-
-enum PaymentMethod {
-  COD
-  BANK_TRANSFER
-  MOMO
-  VNPAY
-  CREDIT_CARD
-}
-
 model Order {
-  id              String        @id @default(uuid())
-  orderCode       String        @unique
-  userId          String
-  addressId       String?
-  status          OrderStatus   @default(PENDING)
-  paymentMethod   PaymentMethod?
-  paymentStatus   PaymentStatus @default(UNPAID)
-  subtotal        Decimal       @db.Decimal(18, 2)
-  shippingFee     Decimal       @default(0) @db.Decimal(18, 2)
-  discount        Decimal       @default(0) @db.Decimal(18, 2)
-  total           Decimal       @db.Decimal(18, 2)
-  note            String?
-  shippedAt       DateTime?
-  deliveredAt     DateTime?
-  cancelledAt     DateTime?
-  cancelReason    String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id             String   @id @default(uuid())
+  orderCode      String   @unique
+  userId         String
+  addressId      String?
+  status         String   @default("PENDING")
+  paymentMethod  String?
+  paymentStatus  String   @default("UNPAID")
+  subtotal       Decimal  @db.Decimal(18, 2)
+  shippingFee    Decimal  @default(0) @db.Decimal(18, 2)
+  discount       Decimal  @default(0) @db.Decimal(18, 2)
+  total          Decimal  @db.Decimal(18, 2)
+  note           String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  cancelledAt    DateTime?
+  cancelReason   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  user    User       @relation(fields: [userId], references: [id])
-  address Address?   @relation(fields: [addressId], references: [id])
+  user    User       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  address Address?   @relation(fields: [addressId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   items   OrderItem[]
 
   @@index([userId])
   @@index([orderCode])
   @@index([status])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -268,29 +252,30 @@ model OrderItem {
   total       Decimal @db.Decimal(18, 2)
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 // ─── Promotion ─────────────────────────────────────────────────
 
 model Coupon {
-  id           String   @id @default(uuid())
-  code         String   @unique
-  description  String?
-  discountType DiscountType
+  id            String   @id @default(uuid())
+  code          String   @unique
+  description   String?
+  discountType  String
   discountValue Decimal  @db.Decimal(18, 2)
-  minOrder     Decimal? @db.Decimal(18, 2)
-  maxDiscount  Decimal? @db.Decimal(18, 2)
-  usageLimit   Int?
-  usedCount    Int      @default(0)
-  startsAt     DateTime
-  expiresAt    DateTime
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
+  minOrder      Decimal? @db.Decimal(18, 2)
+  maxDiscount   Decimal? @db.Decimal(18, 2)
+  usageLimit    Int?
+  usedCount     Int      @default(0)
+  startsAt      DateTime
+  expiresAt     DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-enum DiscountType {
-  PERCENTAGE
-  FIXED_AMOUNT
+  @@index([code])
+  @@index([isActive, startsAt, expiresAt])
 }
