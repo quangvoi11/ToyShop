@@ -36,6 +36,11 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Root redirect
+app.get('/', (_req, res) => {
+  res.redirect(config.cors.origin);
+});
+
 // Routes
 app.use(config.apiPrefix, routes);
 
