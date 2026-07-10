@@ -3,7 +3,7 @@ BEGIN TRY
 BEGIN TRAN;
 
 -- CreateTable
-CREATE TABLE [dbo].[User] (
+CREATE TABLE [dbo].[Users] (
     [id] NVARCHAR(1000) NOT NULL,
     [email] NVARCHAR(1000) NOT NULL,
     [password] NVARCHAR(1000) NOT NULL,
@@ -11,13 +11,13 @@ CREATE TABLE [dbo].[User] (
     [lastName] NVARCHAR(1000) NOT NULL,
     [phone] NVARCHAR(1000),
     [avatar] NVARCHAR(1000),
-    [role] NVARCHAR(1000) NOT NULL CONSTRAINT [User_role_df] DEFAULT 'CUSTOMER',
-    [isActive] BIT NOT NULL CONSTRAINT [User_isActive_df] DEFAULT 1,
-    [createdAt] DATETIME2 NOT NULL CONSTRAINT [User_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
+    [role] NVARCHAR(1000) NOT NULL CONSTRAINT [Users_role_df] DEFAULT 'CUSTOMER',
+    [isActive] BIT NOT NULL CONSTRAINT [Users_isActive_df] DEFAULT 1,
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [Users_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
     [updatedAt] DATETIME2 NOT NULL,
     [refreshToken] NVARCHAR(1000),
-    CONSTRAINT [User_pkey] PRIMARY KEY CLUSTERED ([id]),
-    CONSTRAINT [User_email_key] UNIQUE NONCLUSTERED ([email])
+    CONSTRAINT [Users_pkey] PRIMARY KEY CLUSTERED ([id]),
+    CONSTRAINT [Users_email_key] UNIQUE NONCLUSTERED ([email])
 );
 
 -- CreateTable
@@ -164,27 +164,27 @@ CREATE TABLE [dbo].[WishlistItem] (
 );
 
 -- CreateTable
-CREATE TABLE [dbo].[Order] (
+CREATE TABLE [dbo].[Orders] (
     [id] NVARCHAR(1000) NOT NULL,
     [orderCode] NVARCHAR(1000) NOT NULL,
     [userId] NVARCHAR(1000) NOT NULL,
     [addressId] NVARCHAR(1000),
-    [status] NVARCHAR(1000) NOT NULL CONSTRAINT [Order_status_df] DEFAULT 'PENDING',
+    [status] NVARCHAR(1000) NOT NULL CONSTRAINT [Orders_status_df] DEFAULT 'PENDING',
     [paymentMethod] NVARCHAR(1000),
-    [paymentStatus] NVARCHAR(1000) NOT NULL CONSTRAINT [Order_paymentStatus_df] DEFAULT 'UNPAID',
+    [paymentStatus] NVARCHAR(1000) NOT NULL CONSTRAINT [Orders_paymentStatus_df] DEFAULT 'UNPAID',
     [subtotal] DECIMAL(18,2) NOT NULL,
-    [shippingFee] DECIMAL(18,2) NOT NULL CONSTRAINT [Order_shippingFee_df] DEFAULT 0,
-    [discount] DECIMAL(18,2) NOT NULL CONSTRAINT [Order_discount_df] DEFAULT 0,
+    [shippingFee] DECIMAL(18,2) NOT NULL CONSTRAINT [Orders_shippingFee_df] DEFAULT 0,
+    [discount] DECIMAL(18,2) NOT NULL CONSTRAINT [Orders_discount_df] DEFAULT 0,
     [total] DECIMAL(18,2) NOT NULL,
     [note] NVARCHAR(1000),
     [shippedAt] DATETIME2,
     [deliveredAt] DATETIME2,
     [cancelledAt] DATETIME2,
     [cancelReason] NVARCHAR(1000),
-    [createdAt] DATETIME2 NOT NULL CONSTRAINT [Order_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
+    [createdAt] DATETIME2 NOT NULL CONSTRAINT [Orders_createdAt_df] DEFAULT CURRENT_TIMESTAMP,
     [updatedAt] DATETIME2 NOT NULL,
-    CONSTRAINT [Order_pkey] PRIMARY KEY CLUSTERED ([id]),
-    CONSTRAINT [Order_orderCode_key] UNIQUE NONCLUSTERED ([orderCode])
+    CONSTRAINT [Orders_pkey] PRIMARY KEY CLUSTERED ([id]),
+    CONSTRAINT [Orders_orderCode_key] UNIQUE NONCLUSTERED ([orderCode])
 );
 
 -- CreateTable
@@ -256,16 +256,16 @@ CREATE NONCLUSTERED INDEX [CartItem_cartId_idx] ON [dbo].[CartItem]([cartId]);
 CREATE NONCLUSTERED INDEX [WishlistItem_userId_idx] ON [dbo].[WishlistItem]([userId]);
 
 -- CreateIndex
-CREATE NONCLUSTERED INDEX [Order_userId_idx] ON [dbo].[Order]([userId]);
+CREATE NONCLUSTERED INDEX [Orders_userId_idx] ON [dbo].[Orders]([userId]);
 
 -- CreateIndex
-CREATE NONCLUSTERED INDEX [Order_orderCode_idx] ON [dbo].[Order]([orderCode]);
+CREATE NONCLUSTERED INDEX [Orders_orderCode_idx] ON [dbo].[Orders]([orderCode]);
 
 -- CreateIndex
-CREATE NONCLUSTERED INDEX [Order_status_idx] ON [dbo].[Order]([status]);
+CREATE NONCLUSTERED INDEX [Orders_status_idx] ON [dbo].[Orders]([status]);
 
 -- CreateIndex
-CREATE NONCLUSTERED INDEX [Order_createdAt_idx] ON [dbo].[Order]([createdAt]);
+CREATE NONCLUSTERED INDEX [Orders_createdAt_idx] ON [dbo].[Orders]([createdAt]);
 
 -- CreateIndex
 CREATE NONCLUSTERED INDEX [OrderItem_orderId_idx] ON [dbo].[OrderItem]([orderId]);
@@ -280,7 +280,7 @@ CREATE NONCLUSTERED INDEX [Coupon_code_idx] ON [dbo].[Coupon]([code]);
 CREATE NONCLUSTERED INDEX [Coupon_isActive_startsAt_expiresAt_idx] ON [dbo].[Coupon]([isActive], [startsAt], [expiresAt]);
 
 -- AddForeignKey
-ALTER TABLE [dbo].[Address] ADD CONSTRAINT [Address_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE [dbo].[Address] ADD CONSTRAINT [Address_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[Users]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE [dbo].[Category] ADD CONSTRAINT [Category_parentId_fkey] FOREIGN KEY ([parentId]) REFERENCES [dbo].[Category]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -298,13 +298,13 @@ ALTER TABLE [dbo].[ProductVariant] ADD CONSTRAINT [ProductVariant_productId_fkey
 ALTER TABLE [dbo].[ProductImage] ADD CONSTRAINT [ProductImage_productId_fkey] FOREIGN KEY ([productId]) REFERENCES [dbo].[Product]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE [dbo].[Review] ADD CONSTRAINT [Review_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE [dbo].[Review] ADD CONSTRAINT [Review_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[Users]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE [dbo].[Review] ADD CONSTRAINT [Review_productId_fkey] FOREIGN KEY ([productId]) REFERENCES [dbo].[Product]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE [dbo].[Cart] ADD CONSTRAINT [Cart_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE [dbo].[Cart] ADD CONSTRAINT [Cart_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[Users]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE [dbo].[CartItem] ADD CONSTRAINT [CartItem_cartId_fkey] FOREIGN KEY ([cartId]) REFERENCES [dbo].[Cart]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -313,19 +313,19 @@ ALTER TABLE [dbo].[CartItem] ADD CONSTRAINT [CartItem_cartId_fkey] FOREIGN KEY (
 ALTER TABLE [dbo].[CartItem] ADD CONSTRAINT [CartItem_productId_fkey] FOREIGN KEY ([productId]) REFERENCES [dbo].[Product]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE [dbo].[WishlistItem] ADD CONSTRAINT [WishlistItem_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE [dbo].[WishlistItem] ADD CONSTRAINT [WishlistItem_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[Users]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE [dbo].[WishlistItem] ADD CONSTRAINT [WishlistItem_productId_fkey] FOREIGN KEY ([productId]) REFERENCES [dbo].[Product]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE [dbo].[Order] ADD CONSTRAINT [Order_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[User]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE [dbo].[Orders] ADD CONSTRAINT [Orders_userId_fkey] FOREIGN KEY ([userId]) REFERENCES [dbo].[Users]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE [dbo].[Order] ADD CONSTRAINT [Order_addressId_fkey] FOREIGN KEY ([addressId]) REFERENCES [dbo].[Address]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE [dbo].[Orders] ADD CONSTRAINT [Orders_addressId_fkey] FOREIGN KEY ([addressId]) REFERENCES [dbo].[Address]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE [dbo].[OrderItem] ADD CONSTRAINT [OrderItem_orderId_fkey] FOREIGN KEY ([orderId]) REFERENCES [dbo].[Order]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE [dbo].[OrderItem] ADD CONSTRAINT [OrderItem_orderId_fkey] FOREIGN KEY ([orderId]) REFERENCES [dbo].[Orders]([id]) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE [dbo].[OrderItem] ADD CONSTRAINT [OrderItem_productId_fkey] FOREIGN KEY ([productId]) REFERENCES [dbo].[Product]([id]) ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -342,3 +342,4 @@ END;
 THROW
 
 END CATCH
+

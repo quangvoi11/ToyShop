@@ -17,8 +17,16 @@ export const config = {
     apiKey: process.env.CLOUDINARY_API_KEY || '',
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
   },
+  clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  },
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.EMAIL_FROM || 'ToyShop <noreply@toyshop.com>',
   },
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),

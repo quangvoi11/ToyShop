@@ -18,9 +18,11 @@ model User {
   phone     String?
   avatar    String?
   role      String   @default("CUSTOMER")
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive       Boolean   @default(true)
+  resetToken     String?
+  resetTokenExpires DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   cart         Cart?
   orders       Order[]
@@ -28,6 +30,8 @@ model User {
   addresses    Address[]
   wishlist     WishlistItem[]
   refreshToken String?
+
+  @@map("Users")
 }
 
 model Address {
@@ -93,6 +97,8 @@ model Product {
   sku         String   @unique
   barcode     String?
   stock       Int      @default(0)
+  soldCount   Int      @default(0)
+  viewCount   Int      @default(0)
   weight      Decimal? @db.Decimal(10, 2)
   isActive    Boolean  @default(true)
   isFeatured  Boolean  @default(false)
@@ -237,6 +243,8 @@ model Order {
   @@index([orderCode])
   @@index([status])
   @@index([createdAt])
+
+  @@map("Orders")
 }
 
 model OrderItem {
@@ -250,6 +258,7 @@ model OrderItem {
   price       Decimal @db.Decimal(18, 2)
   quantity    Int
   total       Decimal @db.Decimal(18, 2)
+  imageUrl    String?
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)

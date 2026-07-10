@@ -16,8 +16,17 @@ interface AuthState {
   error: string | null;
 }
 
+function loadUser(): User | null {
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 const initialState: AuthState = {
-  user: null,
+  user: loadUser(),
   accessToken: localStorage.getItem('accessToken'),
   loading: false,
   error: null,
@@ -28,6 +37,7 @@ export const loginThunk = createAsyncThunk(
   async (body: { email: string; password: string }) => {
     const result = await authApi.login(body.email, body.password);
     localStorage.setItem('accessToken', result.accessToken);
+    localStorage.setItem('refreshToken', result.refreshToken);
     return result;
   },
 );
@@ -37,6 +47,7 @@ export const registerThunk = createAsyncThunk(
   async (body: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => {
     const result = await authApi.register(body);
     localStorage.setItem('accessToken', result.accessToken);
+    localStorage.setItem('refreshToken', result.refreshToken);
     return result;
   },
 );
@@ -53,6 +64,8 @@ const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
     },
     clearError(state) {
       state.error = null;
@@ -65,6 +78,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(loginThunk.rejected, (state, action) => {
         state.loading = false;
@@ -75,6 +89,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(registerThunk.rejected, (state, action) => {
         state.loading = false;
@@ -82,6 +97,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.user = action.payload;
+        localStorage.setItem('user', JSON.stringify(action.payload));
       });
   },
 });

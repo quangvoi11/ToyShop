@@ -71,6 +71,11 @@ export async function getBySlug(slug: string) {
 
   if (!product) return null;
 
+  await prisma.product.update({
+    where: { id: product.id },
+    data: { viewCount: { increment: 1 } },
+  });
+
   const reviews = await prisma.review.aggregate({
     where: { productId: product.id },
     _avg: { rating: true },
@@ -79,6 +84,7 @@ export async function getBySlug(slug: string) {
 
   return {
     ...product,
+    viewCount: product.viewCount + 1,
     averageRating: reviews._avg.rating || 0,
     reviewCount: reviews._count,
   };

@@ -6,6 +6,7 @@ import { RootState } from '../store';
 import { fetchCart } from '../store/slices/cartSlice';
 import { createOrder } from '../api/orders';
 import { getAddresses, createAddress } from '../api/addresses';
+import { validateCoupon } from '../api/coupons';
 import { formatCurrency } from '../lib/utils';
 
 const paymentMethods = [
@@ -26,6 +27,11 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    valid: boolean; discountType?: string; discountValue?: number; minOrder?: number; maxDiscount?: number | null;
+  } | null>(null);
+  const [couponError, setCouponError] = useState('');
   const [addressForm, setAddressForm] = useState({
     label: '', street: '', ward: '', district: '', city: '', phone: '', isDefault: true,
   });
@@ -52,7 +58,17 @@ export default function Checkout() {
     return sum + price * item.quantity;
   }, 0);
   const shipping = subtotal >= 500000 ? 0 : 30000;
-  const total = subtotal + shipping;
+
+  let discount = 0;
+  if (appliedCoupon?.valid && appliedCoupon.discountValue) {
+    const dv = appliedCoupon.discountValue;
+    if (appliedCoupon.discountType === 'PERCENTAGE') {
+      discount = Math.min(subtotal * dv / 100, appliedCoupon.maxDiscount || Infinity);
+    } else {
+      discount = Math.min(dv, subtotal);
+    }
+  }
+  const total = subtotal + shipping - discount;
 
   if (!user) {
     navigate('/login');
@@ -71,11 +87,42 @@ export default function Checkout() {
     }
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponError('');
+    try {
+      const result = await validateCoupon(couponCode.trim());
+      if (result.valid) {
+        if (subtotal < result.minOrder) {
+          setCouponError(`Đơn hàng tối thiểu ${formatCurrency(result.minOrder)}`);
+          return;
+        }
+        setAppliedCoupon(result);
+      } else {
+        setCouponError(result.message || 'Mã không hợp lệ');
+        setAppliedCoupon(null);
+      }
+    } catch {
+      setCouponError('Không thể kiểm tra mã giảm giá');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode('');
+    setAppliedCoupon(null);
+    setCouponError('');
+  };
+
   const handleSubmit = async () => {
     if (!selectedAddress) return;
     setSubmitting(true);
     try {
-      const order = await createOrder({ addressId: selectedAddress, paymentMethod, note });
+      const order = await createOrder({
+        addressId: selectedAddress,
+        paymentMethod,
+        note,
+        couponCode: appliedCoupon?.valid ? couponCode.trim() : undefined,
+      });
       navigate(`/orders/${order.id}`);
     } catch (err) {
       console.error(err);
@@ -180,9 +227,37 @@ export default function Checkout() {
               ))}
             </div>
             <hr className="mb-4" />
+            {/* Coupon */}
+            <div className="mb-4">
+              {appliedCoupon?.valid ? (
+                <div className="flex items-center justify-between rounded-lg bg-green-50 p-3 text-sm">
+                  <span className="text-green-700">Giảm: -{formatCurrency(discount)}</span>
+                  <button onClick={handleRemoveCoupon} className="text-green-600 hover:underline">Hủy</button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Mã giảm giá"
+                    className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium hover:bg-gray-200"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+              )}
+              {couponError && <p className="mt-1 text-xs text-red-500">{couponError}</p>}
+            </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-gray-500">Tạm tính</span><span>{formatCurrency(subtotal)}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Phí vận chuyển</span><span>{shipping === 0 ? 'Miễn phí' : formatCurrency(shipping)}</span></div>
+              {discount > 0 && (
+                <div className="flex justify-between"><span className="text-gray-500">Giảm giá</span><span className="text-red-500">-{formatCurrency(discount)}</span></div>
+              )}
               <hr />
               <div className="flex justify-between text-lg font-bold"><span>Tổng</span><span className="text-primary">{formatCurrency(total)}</span></div>
             </div>

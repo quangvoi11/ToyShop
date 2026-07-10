@@ -64,8 +64,14 @@ export default function Login() {
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+                </div>
               </div>
-            </div>
+
+              <div className="flex justify-end">
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                  Quên mật khẩu?
+                </Link>
+              </div>
 
             <button
               type="submit"

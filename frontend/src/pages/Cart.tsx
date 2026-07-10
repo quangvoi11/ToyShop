@@ -6,6 +6,20 @@ import { RootState } from '../store';
 import { fetchCart, updateCartItemThunk, removeCartItemThunk } from '../store/slices/cartSlice';
 import { formatCurrency } from '../lib/utils';
 
+interface CartProduct {
+  sku?: string;
+  name?: string;
+  slug?: string;
+  salePrice?: number | string;
+  basePrice?: number | string;
+}
+
+interface CartItem {
+  id: string;
+  quantity: number;
+  product?: CartProduct;
+}
+
 export default function Cart() {
   const dispatch = useDispatch();
   const { items, loading } = useSelector((s: RootState) => s.cart);
@@ -14,7 +28,7 @@ export default function Cart() {
     dispatch(fetchCart() as any);
   }, [dispatch]);
 
-  const subtotal = items.reduce((sum: number, item: any) => {
+  const subtotal = items.reduce((sum: number, item: CartItem) => {
     const price = item.product?.salePrice
       ? Number(item.product.salePrice)
       : Number(item.product?.basePrice || 0);
@@ -41,7 +55,10 @@ export default function Cart() {
         <ShoppingBag className="mx-auto mb-6 h-16 w-16 text-gray-300" />
         <h1 className="mb-2 text-2xl font-bold">Giỏ hàng trống</h1>
         <p className="mb-6 text-gray-500">Hãy thêm sản phẩm vào giỏ hàng</p>
-        <Link to="/products" className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-medium text-white hover:bg-primary/90">
+        <Link
+          to="/products"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-medium text-white hover:bg-primary/90"
+        >
           <ArrowLeft className="h-4 w-4" />
           Tiếp tục mua sắm
         </Link>
@@ -56,14 +73,17 @@ export default function Cart() {
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Cart items */}
         <div className="lg:col-span-2 space-y-4">
-          {items.map((item: any) => (
+          {items.map((item: CartItem) => (
             <div key={item.id} className="flex gap-4 rounded-xl border bg-white p-4">
               <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
                 <span className="text-3xl">🧱</span>
               </div>
               <div className="flex flex-1 flex-col justify-between">
                 <div>
-                  <Link to={`/products/${item.product?.slug}`} className="font-medium hover:text-primary">
+                  <Link
+                    to={`/products/${item.product?.slug}`}
+                    className="font-medium hover:text-primary"
+                  >
                     {item.product?.name}
                   </Link>
                   <p className="text-sm text-gray-500">{item.product?.sku}</p>
@@ -71,14 +91,28 @@ export default function Cart() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center rounded-lg border">
                     <button
-                      onClick={() => dispatch(updateCartItemThunk({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) }) as any)}
+                      onClick={() =>
+                        dispatch(
+                          updateCartItemThunk({
+                            itemId: item.id,
+                            quantity: Math.max(1, item.quantity - 1),
+                          }) as any,
+                        )
+                      }
                       className="p-1.5 hover:bg-gray-50"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
                     <span className="w-10 text-center text-sm">{item.quantity}</span>
                     <button
-                      onClick={() => dispatch(updateCartItemThunk({ itemId: item.id, quantity: item.quantity + 1 }) as any)}
+                      onClick={() =>
+                        dispatch(
+                          updateCartItemThunk({
+                            itemId: item.id,
+                            quantity: item.quantity + 1,
+                          }) as any,
+                        )
+                      }
                       className="p-1.5 hover:bg-gray-50"
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -87,7 +121,8 @@ export default function Cart() {
                   <div className="flex items-center gap-4">
                     <p className="font-bold text-primary">
                       {formatCurrency(
-                        Number(item.product?.salePrice || item.product?.basePrice || 0) * item.quantity,
+                        Number(item.product?.salePrice || item.product?.basePrice || 0) *
+                          item.quantity,
                       )}
                     </p>
                     <button
@@ -131,7 +166,10 @@ export default function Cart() {
             >
               Thanh toán
             </Link>
-            <Link to="/products" className="mt-3 flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-primary">
+            <Link
+              to="/products"
+              className="mt-3 flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-primary"
+            >
               <ArrowLeft className="h-3 w-3" />
               Tiếp tục mua sắm
             </Link>

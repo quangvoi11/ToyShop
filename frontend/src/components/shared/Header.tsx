@@ -42,7 +42,7 @@ export default function Header() {
         <div className="container-main flex items-center justify-between py-1.5">
           <span>🚚 Miễn phí giao hàng cho đơn trên 500.000₫</span>
           <div className="flex items-center gap-4">
-            <span>Hỗ trợ: 1900.1234</span>
+            <span>Hỗ trợ: 096.146.2003</span>
           </div>
         </div>
       </div>
@@ -71,7 +71,10 @@ export default function Header() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-full border border-gray-300 bg-gray-50 py-2 pl-4 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
-              <button type="submit" className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-primary p-1.5 text-white">
+              <button
+                type="submit"
+                className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-primary p-1.5 text-white"
+              >
                 <Search className="h-4 w-4" />
               </button>
             </div>
@@ -86,12 +89,21 @@ export default function Header() {
                   <span className="hidden text-sm md:inline">{user?.firstName}</span>
                 </button>
                 <div className="invisible absolute right-0 top-full z-50 w-48 rounded-lg border bg-white py-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
-                  <Link to="/profile" className="block px-4 py-2 text-sm hover:bg-gray-50">Tài khoản</Link>
-                  <Link to="/orders" className="block px-4 py-2 text-sm hover:bg-gray-50">Đơn hàng</Link>
-                  <Link to="/wishlist" className="block px-4 py-2 text-sm hover:bg-gray-50">Yêu thích</Link>
+                  <Link to="/profile" className="block px-4 py-2 text-sm hover:bg-gray-50">
+                    Tài khoản
+                  </Link>
+                  <Link to="/orders" className="block px-4 py-2 text-sm hover:bg-gray-50">
+                    Đơn hàng
+                  </Link>
+                  <Link to="/wishlist" className="block px-4 py-2 text-sm hover:bg-gray-50">
+                    Yêu thích
+                  </Link>
                   <hr className="my-1" />
                   <button
-                    onClick={() => { dispatch(logout()); navigate('/'); }}
+                    onClick={() => {
+                      dispatch(logout());
+                      navigate('/');
+                    }}
                     className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
                   >
                     Đăng xuất
@@ -99,13 +111,19 @@ export default function Header() {
                 </div>
               </div>
             ) : (
-              <Link to="/login" className="flex items-center gap-1 rounded-lg p-2 hover:bg-gray-100">
+              <Link
+                to="/login"
+                className="flex items-center gap-1 rounded-lg p-2 hover:bg-gray-100"
+              >
                 <User className="h-5 w-5" />
                 <span className="hidden text-sm md:inline">Đăng nhập</span>
               </Link>
             )}
 
-            <Link to="/cart" className="relative flex items-center gap-1 rounded-lg p-2 hover:bg-gray-100">
+            <Link
+              to="/cart"
+              className="relative flex items-center gap-1 rounded-lg p-2 hover:bg-gray-100"
+            >
               <ShoppingCart className="h-5 w-5" />
               {cartItems.length > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
@@ -122,7 +140,9 @@ export default function Header() {
         <div className="container-main">
           <ul className="flex items-center gap-1">
             <li>
-              <Link to="/" className="block px-4 py-3 text-sm font-medium hover:text-primary">Trang chủ</Link>
+              <Link to="/" className="block px-4 py-3 text-sm font-medium hover:text-primary">
+                Trang chủ
+              </Link>
             </li>
             {categories.map((cat) => (
               <li key={cat.slug} className="group relative">
@@ -133,7 +153,10 @@ export default function Header() {
                   {cat.name}
                 </Link>
                 <div className="invisible absolute left-0 top-full z-50 w-56 rounded-lg border bg-white py-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
-                  <Link to={`/products?category=${cat.slug}`} className="block px-4 py-2 text-sm hover:bg-gray-50">
+                  <Link
+                    to={`/products?category=${cat.slug}`}
+                    className="block px-4 py-2 text-sm hover:bg-gray-50"
+                  >
                     Tất cả {cat.name.toLowerCase()}
                   </Link>
                 </div>

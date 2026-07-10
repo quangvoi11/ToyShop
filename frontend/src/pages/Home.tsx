@@ -144,15 +144,18 @@ export default function Home() {
                 to={`/products/${product.slug}`}
                 className="group rounded-xl border bg-white p-4 transition-all hover:shadow-lg"
               >
-                <div className="mb-3 flex aspect-square items-center justify-center rounded-lg bg-gray-100">
-                  <span className="text-6xl">🧱</span>
+                <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-gray-100">
+                  {product.images?.length > 0
+                    ? <img src={product.images[0].url} alt={product.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                    : <div className="flex h-full items-center justify-center"><span className="text-6xl">🧱</span></div>}
                 </div>
                 <p className="mb-2 text-xs text-gray-500">{product.category?.name}</p>
                 <h3 className="mb-2 line-clamp-2 text-sm font-medium group-hover:text-primary">{product.name}</h3>
-                <div className="flex items-center gap-1 mb-2">
+                <div className="mb-2 flex items-center gap-1">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                   ))}
+                  {product.soldCount > 0 && <span className="ml-auto text-xs text-gray-400">Đã bán {product.soldCount}</span>}
                 </div>
                 <p className="text-lg font-bold text-primary">{formatCurrency(Number(product.basePrice))}</p>
               </Link>

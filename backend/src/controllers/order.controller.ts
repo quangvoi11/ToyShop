@@ -21,3 +21,8 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
   const order = await orderService.getById(req.user!.userId, req.params.id);
   res.json({ success: true, data: order });
 });
+
+export const cancelOrder = asyncHandler(async (req: Request, res: Response) => {
+  const order = await orderService.cancelOrder(req.user!.userId, req.params.id, req.body.reason);
+  res.json({ success: true, data: order });
+});

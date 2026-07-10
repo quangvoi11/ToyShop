@@ -1,17 +1,19 @@
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
+import { validateCoupon } from './coupon.service';
 
 export async function create(data: {
   userId: string;
   addressId: string;
   paymentMethod: string;
   note?: string;
+  couponCode?: string;
 }) {
   const cart = await prisma.cart.findUnique({
     where: { userId: data.userId },
     include: {
       items: {
-        include: { product: { select: { id: true, name: true, sku: true, basePrice: true, salePrice: true } } },
+        include: { product: { select: { id: true, name: true, sku: true, basePrice: true, salePrice: true, stock: true, images: { where: { isPrimary: true }, take: 1, select: { url: true } } } } },
       },
     },
   });
@@ -38,11 +40,27 @@ export async function create(data: {
       price,
       quantity: item.quantity,
       total,
+      imageUrl: (item.product as any).images?.[0]?.url || null,
     };
   });
 
   const shippingFee = subtotal >= 500000 ? 0 : 30000;
-  const total = subtotal + shippingFee;
+  let discount = 0;
+
+  if (data.couponCode) {
+    const couponResult = await validateCoupon(data.couponCode);
+    if (couponResult.valid && subtotal >= (couponResult.minOrder || 0)) {
+      const discountValue = couponResult.discountValue;
+      if (couponResult.discountType === 'PERCENTAGE') {
+        const maxDiscount = couponResult.maxDiscount || Infinity;
+        discount = Math.min(subtotal * discountValue / 100, maxDiscount);
+      } else {
+        discount = Math.min(discountValue, subtotal);
+      }
+    }
+  }
+
+  const total = subtotal + shippingFee - discount;
 
   const orderCode = `TS${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
@@ -54,6 +72,7 @@ export async function create(data: {
         addressId: data.addressId,
         subtotal,
         shippingFee,
+        discount,
         total,
         paymentMethod: data.paymentMethod,
         note: data.note,
@@ -61,6 +80,20 @@ export async function create(data: {
       },
       include: { items: true },
     });
+
+    if (data.couponCode) {
+      await tx.coupon.update({
+        where: { code: data.couponCode.toUpperCase() },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
+
+    for (const item of cart.items) {
+      await tx.product.update({
+        where: { id: item.product.id },
+        data: { soldCount: { increment: item.quantity } },
+      });
+    }
 
     await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
     return created;
@@ -95,4 +128,24 @@ export async function getById(userId: string, orderId: string) {
   });
   if (!order) throw new AppError('Order not found', 404);
   return order;
+}
+
+export async function cancelOrder(userId: string, orderId: string, reason?: string) {
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, userId },
+  });
+  if (!order) throw new AppError('Order not found', 404);
+
+  if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
+    throw new AppError('Cannot cancel order in current status', 400);
+  }
+
+  return prisma.order.update({
+    where: { id: orderId },
+    data: {
+      status: 'CANCELLED',
+      cancelledAt: new Date(),
+      cancelReason: reason || null,
+    },
+  });
 }
