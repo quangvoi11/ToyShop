@@ -9,9 +9,9 @@ const router = Router();
 router.use(authenticate);
 router.use(authorize('ADMIN'));
 
-router.get('/admin/users', ctrl.getAll);
-router.get('/admin/users/:id', ctrl.getById);
-router.patch('/admin/users/:id/status', validate(updateUserStatusSchema), ctrl.updateStatus);
-router.patch('/admin/users/:id/role', validate(updateUserRoleSchema), ctrl.updateRole);
+router.get('/users', ctrl.getAll);
+router.get('/users/:id', ctrl.getById);
+router.patch('/users/:id/status', validate(updateUserStatusSchema), ctrl.updateStatus);
+router.patch('/users/:id/role', validate(updateUserRoleSchema), ctrl.updateRole);
 
 export default router;

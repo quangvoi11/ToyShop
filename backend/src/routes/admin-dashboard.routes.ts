@@ -7,6 +7,6 @@ const router = Router();
 router.use(authenticate);
 router.use(authorize('ADMIN'));
 
-router.get('/admin/dashboard/stats', ctrl.getStats);
+router.get('/dashboard/stats', ctrl.getStats);
 
 export default router;

@@ -153,7 +153,7 @@ export default function AdminProducts() {
   });
 
   const uploadMut = useMutation({
-    mutationFn: uploadImage,
+    mutationFn: (file: File) => uploadImage(file),
   });
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

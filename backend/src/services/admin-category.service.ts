@@ -1,6 +1,7 @@
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
 import { slugify } from '@shared/utils/index';
+import { deleteImagesFromCloudinary } from './upload.service';
 
 interface CategoryNode {
   id: string;
@@ -190,6 +191,10 @@ export async function update(
     }
     const parent = await prisma.category.findUnique({ where: { id: data.parentId } });
     if (!parent) throw new AppError('Danh mục cha không tồn tại', 400);
+  }
+
+  if (data.image !== undefined && data.image !== category.image) {
+    await deleteImagesFromCloudinary([category.image]);
   }
 
   return prisma.category.update({

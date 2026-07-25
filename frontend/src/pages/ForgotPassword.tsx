@@ -16,8 +16,9 @@ export default function ForgotPassword() {
     try {
       await forgotPassword(email);
       setSent(true);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại');
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } } } | undefined;
+      setError(apiErr?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại');
     } finally {
       setLoading(false);
     }

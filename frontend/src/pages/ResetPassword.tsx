@@ -28,8 +28,9 @@ export default function ResetPassword() {
     try {
       await resetPassword(token!, password);
       setDone(true);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Link không hợp lệ hoặc đã hết hạn');
+    } catch (err: unknown) {
+      const apiErr = err as { response?: { data?: { message?: string } } } | undefined;
+      setError(apiErr?.response?.data?.message || 'Link không hợp lệ hoặc đã hết hạn');
     } finally {
       setLoading(false);
     }

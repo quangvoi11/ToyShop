@@ -132,17 +132,17 @@ export async function updateOrderPaymentStatus(id: string, paymentStatus: string
 
 // ===== Upload =====
 
-export async function uploadImage(file: File): Promise<string> {
+export async function uploadImage(file: File, folder?: string): Promise<string> {
   const formData = new FormData();
   formData.append('image', file);
-  const { data } = await api.post('/upload', formData);
+  const { data } = await api.post('/upload', formData, { params: folder ? { folder } : undefined });
   return data.data.url;
 }
 
-export async function uploadMultipleImages(files: File[]): Promise<string[]> {
+export async function uploadMultipleImages(files: File[], folder?: string): Promise<string[]> {
   const formData = new FormData();
   files.forEach((f) => formData.append('images', f));
-  const { data } = await api.post('/upload/multiple', formData);
+  const { data } = await api.post('/upload/multiple', formData, { params: folder ? { folder } : undefined });
   return data.data.urls;
 }
 

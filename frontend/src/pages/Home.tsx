@@ -6,6 +6,24 @@ import { getFeaturedProducts } from '../api/products';
 import { getCategories } from '../api/categories';
 import { formatCurrency } from '../lib/utils';
 
+interface HomeCategory {
+  id: string;
+  slug: string;
+  name: string;
+  image: string | null;
+  _count?: { products: number };
+}
+
+interface HomeProduct {
+  id: string;
+  slug: string;
+  name: string;
+  images: { url: string }[];
+  category?: { name: string };
+  basePrice: number;
+  soldCount: number;
+}
+
 const banners = [
   {
     id: 1,
@@ -113,14 +131,20 @@ export default function Home() {
             <Link to="/products" className="text-sm font-medium text-primary hover:underline">Xem tất cả</Link>
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-            {categories?.map((cat: any) => (
+            {categories?.map((cat: HomeCategory) => (
               <Link
                 key={cat.id}
                 to={`/products?category=${cat.slug}`}
                 className="group rounded-xl border p-6 text-center transition-all hover:border-primary hover:shadow-lg"
               >
-                <div className="mb-3 text-4xl">
-                  {cat.slug === 'lego' ? '🧱' : cat.slug === 'bup-be' ? '👧' : cat.slug === 'xe-dieu-khien' ? '🚗' : cat.slug === 'do-choi-giao-duc' ? '📚' : '🧸'}
+                <div className="mb-3 flex h-16 items-center justify-center text-4xl">
+                  {cat.image ? (
+                    <img src={cat.image} alt={cat.name} className="h-16 w-16 rounded-full object-cover" />
+                  ) : (
+                    <span>
+                      {cat.slug === 'lego' ? '🧱' : cat.slug === 'bup-be' ? '👧' : cat.slug === 'xe-dieu-khien' ? '🚗' : cat.slug === 'do-choi-giao-duc' ? '📚' : '🧸'}
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-semibold group-hover:text-primary">{cat.name}</h3>
                 <p className="mt-1 text-xs text-gray-500">{cat._count?.products || 0} sản phẩm</p>
@@ -138,14 +162,14 @@ export default function Home() {
             <Link to="/products" className="text-sm font-medium text-primary hover:underline">Xem tất cả</Link>
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {products?.map((product: any) => (
+            {products?.map((product: HomeProduct) => (
               <Link
                 key={product.id}
                 to={`/products/${product.slug}`}
                 className="group rounded-xl border bg-white p-4 transition-all hover:shadow-lg"
               >
                 <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-gray-100">
-                  {product.images?.length > 0
+                  {product.images.length > 0
                     ? <img src={product.images[0].url} alt={product.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                     : <div className="flex h-full items-center justify-center"><span className="text-6xl">🧱</span></div>}
                 </div>

@@ -3,7 +3,13 @@ import { prisma } from '../utils/prisma';
 export async function getAll() {
   return prisma.category.findMany({
     where: { isActive: true },
-    include: { _count: { select: { products: true } } },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      image: true,
+      _count: { select: { products: true } },
+    },
     orderBy: { sortOrder: 'asc' },
   });
 }

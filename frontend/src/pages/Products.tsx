@@ -6,6 +6,22 @@ import { getProducts } from '../api/products';
 import { getCategories } from '../api/categories';
 import { formatCurrency } from '../lib/utils';
 
+interface CategoryItem {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+interface ProductItem {
+  id: string;
+  slug: string;
+  name: string;
+  images: { url: string }[];
+  category?: { name: string };
+  basePrice: number;
+  soldCount: number;
+}
+
 const sortOptions = [
   { value: 'newest', label: 'Mới nhất' },
   { value: 'price_asc', label: 'Giá: Thấp → Cao' },
@@ -92,7 +108,7 @@ export default function Products() {
               <button onClick={() => updateParam('category', '')} className={`block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100 ${!category ? 'bg-primary/10 font-medium text-primary' : ''}`}>
                 Tất cả
               </button>
-              {categories?.map((cat: any) => (
+              {categories?.map((cat: CategoryItem) => (
                 <button key={cat.id} onClick={() => updateParam('category', cat.slug)} className={`block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100 ${category === cat.slug ? 'bg-primary/10 font-medium text-primary' : ''}`}>
                   {cat.name}
                 </button>
@@ -124,14 +140,14 @@ export default function Products() {
             <>
               {result?.data?.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                  {result.data.map((product: any) => (
+                  {result.data.map((product: ProductItem) => (
                     <Link
                       key={product.id}
                       to={`/products/${product.slug}`}
                       className="group rounded-xl border bg-white p-4 transition-all hover:shadow-lg"
                     >
                       <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-gray-100">
-                        {product.images?.length > 0
+                        {product.images.length > 0
                           ? <img src={product.images[0].url} alt={product.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                           : <div className="flex h-full items-center justify-center"><span className="text-5xl">🧱</span></div>}
                       </div>

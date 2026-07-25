@@ -11,19 +11,19 @@ const router = Router();
 router.use(authenticate);
 router.use(authorize('ADMIN'));
 
-router.get('/admin/products', ctrl.getAll);
-router.get('/admin/products/:id', ctrl.getById);
-router.post('/admin/products', validate(createProductSchema), ctrl.create);
-router.put('/admin/products/:id', validate(updateProductSchema), ctrl.update);
-router.delete('/admin/products/:id', ctrl.remove);
+router.get('/products', ctrl.getAll);
+router.get('/products/:id', ctrl.getById);
+router.post('/products', validate(createProductSchema), ctrl.create);
+router.put('/products/:id', validate(updateProductSchema), ctrl.update);
+router.delete('/products/:id', ctrl.remove);
 
-router.get('/admin/categories/flat', categoryCtrl.getFlat);
-router.get('/admin/categories', categoryCtrl.getTree);
-router.get('/admin/categories/:id', categoryCtrl.getById);
-router.post('/admin/categories', validate(createCategorySchema), categoryCtrl.create);
-router.put('/admin/categories/:id', validate(updateCategorySchema), categoryCtrl.update);
-router.delete('/admin/categories/:id', categoryCtrl.remove);
+router.get('/categories/flat', categoryCtrl.getFlat);
+router.get('/categories', categoryCtrl.getTree);
+router.get('/categories/:id', categoryCtrl.getById);
+router.post('/categories', validate(createCategorySchema), categoryCtrl.create);
+router.put('/categories/:id', validate(updateCategorySchema), categoryCtrl.update);
+router.delete('/categories/:id', categoryCtrl.remove);
 
-router.get('/admin/brands', ctrl.getBrands);
+router.get('/brands', ctrl.getBrands);
 
 export default router;

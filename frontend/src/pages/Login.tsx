@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginThunk, clearError } from '../store/slices/authSlice';
-import { RootState } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 
 export default function Login() {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((s: RootState) => s.auth);
+  const { loading, error } = useAppSelector((s) => s.auth);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: 'admin@toyshop.com', password: 'Admin@123' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await dispatch(loginThunk(form) as any).unwrap();
+      await dispatch(loginThunk(form)).unwrap();
       navigate('/');
     } catch {
       // error handled by slice

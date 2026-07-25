@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
-import path from 'path';
 import rateLimit from 'express-rate-limit';
 import { config } from './config';
 import { errorHandler } from './middleware/errorHandler';
@@ -44,14 +43,6 @@ app.use(limiter);
 app.get('/', (_req, res) => {
   res.redirect(config.cors.origin);
 });
-
-// Static files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
-  setHeaders: (res) => {
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  },
-}));
 
 // Routes
 app.use(config.apiPrefix, routes);

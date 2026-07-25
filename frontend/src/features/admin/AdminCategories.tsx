@@ -44,6 +44,15 @@ const generateSlug = (name: string) =>
     .replace(/[\s_]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+const flattenAll = (list: CategoryNode[], depth = 0): CategoryNode[] => {
+  const out: CategoryNode[] = [];
+  list.forEach((n) => {
+    out.push({ ...n, depth });
+    if (n.children?.length) out.push(...flattenAll(n.children, depth + 1));
+  });
+  return out;
+};
+
 export default function AdminCategories() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -63,16 +72,8 @@ export default function AdminCategories() {
     queryFn: getAdminCategories,
   });
 
-  const nodes: CategoryNode[] = tree || [];
+  const nodes: CategoryNode[] = useMemo(() => tree ?? [], [tree]);
 
-  const flattenAll = (list: CategoryNode[], depth = 0): CategoryNode[] => {
-    const out: CategoryNode[] = [];
-    list.forEach((n) => {
-      out.push({ ...n, depth });
-      if (n.children?.length) out.push(...flattenAll(n.children, depth + 1));
-    });
-    return out;
-  };
 
   const rows = useMemo(() => {
     const all = flattenAll(nodes);
@@ -154,7 +155,7 @@ export default function AdminCategories() {
     e.target.value = '';
     setUploading(true);
     try {
-      const url = await uploadImage(file);
+      const url = await uploadImage(file, 'toyshop/categories');
       setForm((f) => ({ ...f, image: url }));
     } catch {
       alert('Tải ảnh thất bại');
@@ -397,23 +398,23 @@ export default function AdminCategories() {
               {/* Image */}
               <div>
                 <label className="mb-2 block text-sm font-medium">Hình ảnh</label>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   {form.image && (
-                    <img src={form.image} alt="" className="h-16 w-16 rounded-lg object-cover bg-gray-100" />
+                    <div className="relative h-24 w-24 rounded-lg border bg-gray-50 overflow-hidden group">
+                      <img src={form.image} alt="" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, image: '' })}
+                        className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
                   )}
-                  <label className={`flex h-16 w-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed hover:bg-gray-50 ${uploading ? 'pointer-events-none opacity-50' : ''}`}>
+                  <label className={`flex h-24 w-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed hover:bg-gray-50 ${uploading ? 'pointer-events-none opacity-50' : ''}`}>
                     {uploading ? <Loader2 className="h-6 w-6 animate-spin text-gray-400" /> : <Plus className="h-6 w-6 text-gray-400" />}
                     <input type="file" accept="image/*" hidden onChange={handleFileSelect} disabled={uploading} />
                   </label>
-                  {form.image && (
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, image: '' })}
-                      className="text-sm text-red-600 hover:underline"
-                    >
-                      Xoá ảnh
-                    </button>
-                  )}
                 </div>
               </div>
             </div>

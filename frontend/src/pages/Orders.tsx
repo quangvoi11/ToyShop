@@ -2,9 +2,17 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Package } from 'lucide-react';
 import { getMyOrders } from '../api/orders';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { useAppSelector } from '../store';
 import { formatCurrency } from '../lib/utils';
+
+interface OrderItem {
+  id: string;
+  orderCode: string;
+  createdAt: string;
+  items?: unknown[];
+  total: number;
+  status: string;
+}
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700',
@@ -25,7 +33,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Orders() {
-  const { user } = useSelector((s: RootState) => s.auth);
+  const { user } = useAppSelector((s) => s.auth);
   const { data: result, isLoading } = useQuery({
     queryKey: ['orders'],
     queryFn: () => getMyOrders(1),
@@ -56,7 +64,7 @@ export default function Orders() {
         </div>
       ) : result?.data?.length > 0 ? (
         <div className="space-y-4">
-          {result.data.map((order: any) => (
+          {result.data.map((order: OrderItem) => (
             <Link
               key={order.id}
               to={`/orders/${order.id}`}

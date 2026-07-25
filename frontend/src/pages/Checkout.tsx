@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
-import { RootState } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 import { fetchCart } from '../store/slices/cartSlice';
+import type { CartItem } from '../store/slices/cartSlice';
 import { createOrder } from '../api/orders';
 import { getAddresses, createAddress } from '../api/addresses';
 import { validateCoupon } from '../api/coupons';
 import { formatCurrency } from '../lib/utils';
+
+interface Address {
+  id: string;
+  label?: string;
+  street: string;
+  ward: string;
+  district: string;
+  city: string;
+  phone: string;
+  isDefault?: boolean;
+}
 
 const paymentMethods = [
   { value: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵' },
@@ -18,9 +29,9 @@ const paymentMethods = [
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { items } = useSelector((s: RootState) => s.cart);
-  const { user } = useSelector((s: RootState) => s.auth);
+  const dispatch = useAppDispatch();
+  const { items } = useAppSelector((s) => s.cart);
+  const { user } = useAppSelector((s) => s.auth);
 
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [note, setNote] = useState('');
@@ -43,17 +54,17 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    dispatch(fetchCart() as any);
+    dispatch(fetchCart());
   }, [dispatch]);
 
   useEffect(() => {
     if (addresses?.length > 0 && !selectedAddress) {
-      const defaultAddr = addresses.find((a: any) => a.isDefault) || addresses[0];
+      const defaultAddr = addresses.find((a: Address) => a.isDefault) || addresses[0];
       setSelectedAddress(defaultAddr.id);
     }
   }, [addresses, selectedAddress]);
 
-  const subtotal = items.reduce((sum: number, item: any) => {
+  const subtotal = items.reduce((sum: number, item: CartItem) => {
     const price = Number(item.product?.salePrice || item.product?.basePrice || 0);
     return sum + price * item.quantity;
   }, 0);
@@ -123,7 +134,12 @@ export default function Checkout() {
         note,
         couponCode: appliedCoupon?.valid ? couponCode.trim() : undefined,
       });
-      navigate(`/orders/${order.id}`);
+
+      if (order.paymentUrl) {
+        window.location.href = order.paymentUrl;
+      } else {
+        navigate(`/orders/${order.id}`);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -169,7 +185,7 @@ export default function Checkout() {
               </form>
             ) : (
               <div className="space-y-3">
-                {addresses?.map((addr: any) => (
+                {addresses?.map((addr: Address) => (
                   <label key={addr.id} className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 hover:bg-gray-50">
                     <input type="radio" name="address" checked={selectedAddress === addr.id} onChange={() => setSelectedAddress(addr.id)} className="mt-0.5" />
                     <div>
@@ -215,7 +231,7 @@ export default function Checkout() {
           <div className="sticky top-24 rounded-xl border bg-white p-6">
             <h2 className="mb-4 text-lg font-semibold">Đơn hàng</h2>
             <div className="mb-4 space-y-3">
-              {items.map((item: any) => (
+              {items.map((item: CartItem) => (
                 <div key={item.id} className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100 text-lg">🧱</div>
                   <div className="flex-1 text-sm">

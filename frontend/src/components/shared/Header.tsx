@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
 import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
-import { RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { logout, fetchProfile } from '../../store/slices/authSlice';
 
 const categories = [
@@ -16,14 +15,14 @@ const categories = [
 export default function Header() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user, accessToken } = useSelector((s: RootState) => s.auth);
-  const cartItems = useSelector((s: RootState) => s.cart.items);
+  const { user, accessToken } = useAppSelector((s) => s.auth);
+  const cartItems = useAppSelector((s) => s.cart.items);
 
   useEffect(() => {
     if (accessToken && !user) {
-      dispatch(fetchProfile() as any);
+      dispatch(fetchProfile());
     }
   }, [accessToken, user, dispatch]);
 

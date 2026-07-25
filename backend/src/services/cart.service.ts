@@ -8,7 +8,7 @@ export async function getCart(userId: string) {
       items: {
         include: {
           product: {
-            select: { id: true, name: true, slug: true, basePrice: true, salePrice: true, stock: true },
+            select: { id: true, name: true, slug: true, sku: true, basePrice: true, salePrice: true, stock: true },
           },
         },
       },
@@ -18,7 +18,7 @@ export async function getCart(userId: string) {
   if (!cart) {
     cart = await prisma.cart.create({
       data: { userId },
-      include: { items: { include: { product: { select: { id: true, name: true, slug: true, basePrice: true, salePrice: true, stock: true } } } } },
+      include: { items: { include: { product: { select: { id: true, name: true, slug: true, sku: true, basePrice: true, salePrice: true, stock: true } } } } },
     });
   }
 

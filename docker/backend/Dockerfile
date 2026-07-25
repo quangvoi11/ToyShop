@@ -1,17 +1,21 @@
 FROM node:20-alpine AS base
 
 WORKDIR /app
-COPY ../backend/package*.json ./
-RUN npm ci --only=production
+COPY backend/package*.json ./backend/
+COPY shared/package*.json ./shared/
+RUN cd backend && npm install && cd ../shared && npm install
 
 FROM base AS development
-RUN npm install
-COPY ../backend/ .
+COPY backend/ ./backend/
+COPY shared/ ./shared/
+WORKDIR /app/backend
 EXPOSE 5000
 CMD ["npm", "run", "dev"]
 
 FROM base AS production
-COPY ../backend/ .
-RUN npm run build
+COPY backend/ ./backend/
+COPY shared/ ./shared/
+WORKDIR /app/backend
+RUN npx prisma generate && npm run build
 EXPOSE 5000
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/backend/src/server.js"]

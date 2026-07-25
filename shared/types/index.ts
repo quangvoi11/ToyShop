@@ -167,6 +167,52 @@ export interface UpdateOrderStatusRequest {
   cancelReason?: string;
 }
 
+// ─── VNPay ─────────────────────────────────────────────────────
+
+export interface VnpayPaymentUrlResponse {
+  paymentUrl: string;
+}
+
+export interface OrderDetail {
+  id: string;
+  orderCode: string;
+  status: OrderStatus;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  subtotal: number;
+  shippingFee: number;
+  discount: number;
+  total: number;
+  note?: string;
+  createdAt: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+  vnp_TxnRef?: string;
+  vnp_TransactionNo?: string;
+  vnp_ResponseCode?: string;
+  vnp_BankCode?: string;
+  paymentUrl?: string;
+  paidAt?: string;
+  address?: {
+    street: string;
+    ward: string;
+    district: string;
+    city: string;
+    phone: string;
+  };
+  items: Array<{
+    id: string;
+    productName: string;
+    productSku: string;
+    price: number;
+    quantity: number;
+    total: number;
+    imageUrl?: string;
+  }>;
+}
+
 // ─── Dashboard ─────────────────────────────────────────────────
 
 export interface DashboardStats {
@@ -217,6 +263,7 @@ export interface CreateCouponRequest {
 
 export interface ReviewSummary {
   id: string;
+  userId: string;
   rating: number;
   title?: string;
   comment?: string;

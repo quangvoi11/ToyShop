@@ -9,9 +9,9 @@ const router = Router();
 router.use(authenticate);
 router.use(authorize('ADMIN'));
 
-router.get('/admin/orders', ctrl.getAll);
-router.get('/admin/orders/:id', ctrl.getById);
-router.patch('/admin/orders/:id/status', validate(updateOrderStatusSchema), ctrl.updateStatus);
-router.patch('/admin/orders/:id/payment', validate(updatePaymentStatusSchema), ctrl.updatePaymentStatus);
+router.get('/orders', ctrl.getAll);
+router.get('/orders/:id', ctrl.getById);
+router.patch('/orders/:id/status', validate(updateOrderStatusSchema), ctrl.updateStatus);
+router.patch('/orders/:id/payment', validate(updatePaymentStatusSchema), ctrl.updatePaymentStatus);
 
 export default router;

@@ -15,6 +15,7 @@ import adminCouponRoutes from './admin-coupon.routes';
 import uploadRoutes from './upload.routes';
 import reviewRoutes from './review.routes';
 import couponRoutes from './coupon.routes';
+import paymentRoutes from './payment.routes';
 
 const router = Router();
 
@@ -26,13 +27,14 @@ router.use(cartRoutes);
 router.use(wishlistRoutes);
 router.use(orderRoutes);
 router.use(addressRoutes);
-router.use(adminRoutes);
-router.use(adminOrderRoutes);
-router.use(adminUserRoutes);
-router.use(adminDashboardRoutes);
-router.use(adminCouponRoutes);
-router.use(uploadRoutes);
 router.use(reviewRoutes);
 router.use(couponRoutes);
+router.use(paymentRoutes);
+router.use('/admin', adminRoutes);
+router.use('/admin', adminOrderRoutes);
+router.use('/admin', adminUserRoutes);
+router.use('/admin', adminDashboardRoutes);
+router.use('/admin', adminCouponRoutes);
+router.use(uploadRoutes);
 
 export default router;

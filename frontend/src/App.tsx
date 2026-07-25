@@ -22,6 +22,7 @@ import Wishlist from './pages/Wishlist';
 import Addresses from './pages/Addresses';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import PaymentResult from './pages/PaymentResult';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/payment/result" element={<PaymentResult />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>

@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Package, XCircle, Check } from 'lucide-react';
-import { getOrderById, cancelOrder } from '../api/orders';
+import { getOrderById, cancelOrder, retryPayment } from '../api/orders';
 import { formatCurrency } from '../lib/utils';
 
 const statusColors: Record<string, string> = {
@@ -69,6 +69,15 @@ export default function OrderDetail() {
   const cancelMut = useMutation({
     mutationFn: () => cancelOrder(id!),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['order', id] }),
+  });
+
+  const retryPaymentMut = useMutation({
+    mutationFn: () => retryPayment(id!),
+    onSuccess: (data) => {
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      }
+    },
   });
 
   if (isLoading) {
@@ -241,6 +250,17 @@ export default function OrderDetail() {
             >
               <XCircle className="h-4 w-4" />
               {cancelMut.isPending ? 'Đang hủy...' : 'Hủy đơn hàng'}
+            </button>
+          )}
+
+          {/* Retry VNPay payment */}
+          {order.paymentMethod === 'VNPAY' && order.paymentStatus === 'UNPAID' && order.status !== 'CANCELLED' && (
+            <button
+              onClick={() => retryPaymentMut.mutate()}
+              disabled={retryPaymentMut.isPending}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+            >
+              {retryPaymentMut.isPending ? 'Đang tạo liên kết...' : 'Thanh toán lại'}
             </button>
           )}
         </div>

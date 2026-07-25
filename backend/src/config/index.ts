@@ -32,4 +32,11 @@ export const config = {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
   },
+  vnpay: {
+    tmnCode: process.env.VNPAY_TMN_CODE || '',
+    hashSecret: process.env.VNPAY_HASH_SECRET || '',
+    url: process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
+    returnUrl: process.env.VNPAY_RETURN_URL || 'http://localhost:5000/api/v1/payment/vnpay/result',
+    expireMinutes: parseInt(process.env.VNPAY_EXPIRE_MINUTES || '15', 10),
+  },
 };

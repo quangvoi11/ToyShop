@@ -1,31 +1,17 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
-import { RootState } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 import { fetchCart, updateCartItemThunk, removeCartItemThunk } from '../store/slices/cartSlice';
+import type { CartItem } from '../store/slices/cartSlice';
 import { formatCurrency } from '../lib/utils';
 
-interface CartProduct {
-  sku?: string;
-  name?: string;
-  slug?: string;
-  salePrice?: number | string;
-  basePrice?: number | string;
-}
-
-interface CartItem {
-  id: string;
-  quantity: number;
-  product?: CartProduct;
-}
-
 export default function Cart() {
-  const dispatch = useDispatch();
-  const { items, loading } = useSelector((s: RootState) => s.cart);
+  const dispatch = useAppDispatch();
+  const { items, loading } = useAppSelector((s) => s.cart);
 
   useEffect(() => {
-    dispatch(fetchCart() as any);
+    dispatch(fetchCart());
   }, [dispatch]);
 
   const subtotal = items.reduce((sum: number, item: CartItem) => {
@@ -96,7 +82,7 @@ export default function Cart() {
                           updateCartItemThunk({
                             itemId: item.id,
                             quantity: Math.max(1, item.quantity - 1),
-                          }) as any,
+                          }) ,
                         )
                       }
                       className="p-1.5 hover:bg-gray-50"
@@ -110,7 +96,7 @@ export default function Cart() {
                           updateCartItemThunk({
                             itemId: item.id,
                             quantity: item.quantity + 1,
-                          }) as any,
+                          }) ,
                         )
                       }
                       className="p-1.5 hover:bg-gray-50"
@@ -126,7 +112,7 @@ export default function Cart() {
                       )}
                     </p>
                     <button
-                      onClick={() => dispatch(removeCartItemThunk(item.id) as any)}
+                      onClick={() => dispatch(removeCartItemThunk(item.id) )}
                       className="text-gray-400 hover:text-red-500"
                     >
                       <Trash2 className="h-4 w-4" />

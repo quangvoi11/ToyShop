@@ -1,8 +1,27 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as cartApi from '../../api/cart';
 
+export interface CartProduct {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string;
+  basePrice: number;
+  salePrice: number | null;
+  stock: number;
+}
+
+export interface CartItem {
+  id: string;
+  cartId: string;
+  productId: string;
+  variantId: string | null;
+  quantity: number;
+  product: CartProduct;
+}
+
 interface CartState {
-  items: any[];
+  items: CartItem[];
   loading: boolean;
 }
 

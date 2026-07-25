@@ -232,6 +232,12 @@ model Order {
   deliveredAt    DateTime?
   cancelledAt    DateTime?
   cancelReason   String?
+  vnp_TxnRef        String?
+  vnp_TransactionNo  String?
+  vnp_ResponseCode   String?
+  vnp_BankCode       String?
+  paymentUrl         String?
+  paidAt             DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

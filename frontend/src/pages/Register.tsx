@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import { registerThunk, clearError } from '../store/slices/authSlice';
-import { RootState } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 
 export default function Register() {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { loading, error } = useSelector((s: RootState) => s.auth);
+  const { loading, error } = useAppSelector((s) => s.auth);
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -32,7 +31,7 @@ export default function Register() {
     }
 
     try {
-      await dispatch(registerThunk(form) as any).unwrap();
+      await dispatch(registerThunk(form)).unwrap();
       navigate('/');
     } catch {
       // error handled by slice

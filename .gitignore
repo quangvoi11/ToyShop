@@ -59,3 +59,17 @@ temp/
 # --- TypeScript ---
 *.tsbuildinfo
 tsconfig.tsbuildinfo
+*.js.map
+*.d.ts.map
+
+# --- Shared compiled output ---
+shared/utils/*.js
+shared/utils/*.d.ts
+shared/utils/*.js.map
+shared/utils/*.d.ts.map
+
+# --- Vite compiled config ---
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# --- Logs ---

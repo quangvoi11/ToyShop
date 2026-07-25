@@ -1,13 +1,27 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as orderService from '../services/order.service';
+import * as paymentService from '../services/payment.service';
 
 export const create = asyncHandler(async (req: Request, res: Response) => {
   const order = await orderService.create({
     userId: req.user!.userId,
     ...req.body,
   });
-  res.status(201).json({ success: true, data: order });
+
+  let paymentUrl: string | undefined;
+
+  if (order.paymentMethod === 'VNPAY') {
+    const ipAddr = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+    const urlResult = await paymentService.getPaymentUrlForOrder(
+      order.id,
+      req.user!.userId,
+      ipAddr,
+    );
+    paymentUrl = urlResult.paymentUrl;
+  }
+
+  res.status(201).json({ success: true, data: { ...order, paymentUrl } });
 });
 
 export const getMyOrders = asyncHandler(async (req: Request, res: Response) => {

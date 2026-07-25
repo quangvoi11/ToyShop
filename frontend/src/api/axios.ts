@@ -12,8 +12,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let refreshPromise: Promise<any> | null = null;
+let refreshPromise: Promise<{ data: { data: { accessToken: string } } }> | null = null;
 
 api.interceptors.response.use(
   (response) => response,

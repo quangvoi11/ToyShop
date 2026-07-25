@@ -1,5 +1,6 @@
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
+import { deleteImagesFromCloudinary } from './upload.service';
 
 interface ImageInput {
   url: string;
@@ -95,7 +96,7 @@ export async function create(data: CreateProductInput) {
 }
 
 export async function update(id: string, data: UpdateProductInput) {
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({ where: { id }, include: { images: true } });
   if (!product) throw new AppError('Product not found', 404);
 
   if (data.slug && data.slug !== product.slug) {
@@ -105,7 +106,7 @@ export async function update(id: string, data: UpdateProductInput) {
 
   const { images, ...productFields } = data;
 
-  return prisma.product.update({
+  const updated = await prisma.product.update({
     where: { id },
     data: {
       ...productFields,
@@ -127,6 +128,12 @@ export async function update(id: string, data: UpdateProductInput) {
         : {}),
     },
   });
+
+  if (images !== undefined) {
+    await deleteImagesFromCloudinary(product.images.map((img) => img.url));
+  }
+
+  return updated;
 }
 
 export async function remove(id: string) {

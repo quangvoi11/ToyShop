@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSelector, useDispatch } from 'react-redux';
 import { ShoppingCart, Heart, Star, Minus, Plus, MessageSquare, Send } from 'lucide-react';
 import { getProductBySlug } from '../api/products';
 import { getWishlist, addToWishlist, removeFromWishlist } from '../api/wishlist';
 import { getProductReviews, createReview } from '../api/reviews';
 import { addToCartThunk } from '../store/slices/cartSlice';
 import { formatCurrency } from '../lib/utils';
-import type { RootState } from '../store';
+import { useAppDispatch, useAppSelector } from '../store';
 import type { WishlistItemSummary, ReviewSummary } from '../../../shared/types';
 
 interface ProductImage {
@@ -21,8 +20,8 @@ interface ProductImage {
 
 export default function ProductDetail() {
   const { slug } = useParams();
-  const dispatch = useDispatch();
-  const { user } = useSelector((s: RootState) => s.auth);
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((s) => s.auth);
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -82,7 +81,7 @@ export default function ProductDetail() {
   });
 
   const handleAddToCart = () => {
-    dispatch(addToCartThunk({ productId: product.id, quantity }) as any);
+    dispatch(addToCartThunk({ productId: product.id, quantity }));
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -132,6 +131,7 @@ export default function ProductDetail() {
   };
 
   const avgRating = product.averageRating || 0;
+  const userReview = reviews?.find((r: ReviewSummary) => r.userId === user?.id);
 
   return (
     <div className="container-main py-8">
@@ -259,31 +259,54 @@ export default function ProductDetail() {
 
         {/* Review Form */}
         {user ? (
-          <div className="mb-8 rounded-xl border bg-white p-6">
-            <h3 className="mb-4 font-semibold">Viết đánh giá</h3>
-            <div className="mb-3 flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button key={star} onClick={() => setReviewRating(star)} type="button">
-                  <Star className={`h-5 w-5 ${star <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
-                </button>
-              ))}
+          userReview ? (
+            <div className="mb-8 rounded-xl border bg-white p-6">
+              <h3 className="mb-3 font-semibold text-green-700">Bạn đã đánh giá sản phẩm này</h3>
+              <div className="mb-2 flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className={`h-5 w-5 ${s <= userReview.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                  />
+                ))}
+              </div>
+              {userReview.comment && <p className="text-sm text-gray-600">{userReview.comment}</p>}
+              <p className="mt-2 text-xs text-gray-400">
+                {new Date(userReview.createdAt).toLocaleDateString('vi-VN')}
+              </p>
             </div>
-            <textarea
-              value={reviewComment}
-              onChange={(e) => setReviewComment(e.target.value)}
-              placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-              rows={3}
-            />
-            <button
-              onClick={() => reviewMut.mutate()}
-              disabled={reviewMut.isPending || !reviewComment.trim()}
-              className="mt-3 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
-            >
-              <Send className="h-4 w-4" />
-              {reviewMut.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}
-            </button>
-          </div>
+          ) : (
+            <div className="mb-8 rounded-xl border bg-white p-6">
+              <h3 className="mb-4 font-semibold">Viết đánh giá</h3>
+              <div className="mb-3 flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} onClick={() => setReviewRating(star)} type="button">
+                    <Star className={`h-5 w-5 ${star <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                rows={3}
+              />
+              <button
+                onClick={() => reviewMut.mutate()}
+                disabled={reviewMut.isPending || !reviewComment.trim()}
+                className="mt-3 flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+                {reviewMut.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}
+              </button>
+              {reviewMut.isError && (
+                <p className="mt-2 text-sm text-red-600">
+                  {(reviewMut.error as Error).message || 'Không thể gửi đánh giá'}
+                </p>
+              )}
+            </div>
+          )
         ) : (
           <div className="mb-8 rounded-xl border bg-gray-50 p-6 text-center text-sm text-gray-500">
             <Link to="/login" className="text-primary hover:underline">Đăng nhập</Link> để viết đánh giá

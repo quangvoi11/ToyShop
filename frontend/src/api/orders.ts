@@ -19,3 +19,8 @@ export async function cancelOrder(id: string, reason?: string) {
   const { data } = await api.patch(`/orders/${id}/cancel`, { reason });
   return data.data;
 }
+
+export async function retryPayment(orderId: string) {
+  const { data } = await api.get(`/payment/vnpay/url/${orderId}`);
+  return data.data;
+}
