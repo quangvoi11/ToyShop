@@ -26,7 +26,7 @@ export const config = {
     port: parseInt(process.env.SMTP_PORT || '587', 10),
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
-    from: process.env.EMAIL_FROM || 'ToyShop <noreply@toyshop.com>',
+    from: process.env.EMAIL_FROM || 'Ele Store <noreply@elestore.com>',
   },
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
@@ -37,6 +37,7 @@ export const config = {
     hashSecret: process.env.VNPAY_HASH_SECRET || '',
     url: process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
     returnUrl: process.env.VNPAY_RETURN_URL || 'http://localhost:5000/api/v1/payment/vnpay/result',
+    ipnUrl: process.env.VNPAY_IPN_URL || 'http://localhost:5000/api/v1/payment/vnpay/ipn',
     expireMinutes: parseInt(process.env.VNPAY_EXPIRE_MINUTES || '15', 10),
   },
 };

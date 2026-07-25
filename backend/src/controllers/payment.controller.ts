@@ -28,3 +28,11 @@ export const handleReturn = asyncHandler(async (req: Request, res: Response) => 
     res.redirect(`${clientUrl}/payment/result?status=${status}&orderId=${orderId}`);
   }
 });
+
+export const handleIpn = asyncHandler(async (req: Request, res: Response) => {
+  const query = req.query as Record<string, string>;
+  const result = await paymentService.processIpn(query);
+
+  // VNPay requires HTTP 200 with RspCode JSON for ALL cases
+  res.status(200).json({ RspCode: result.rspCode, Message: result.message });
+});

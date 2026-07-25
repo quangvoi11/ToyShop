@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { config } from '../config';
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
+import { confirmPaymentStock } from './order.service';
 
 function sortObject(obj: Record<string, string>): Record<string, string> {
   const sorted: Record<string, string> = {};
@@ -95,24 +96,52 @@ export async function processReturn(query: Record<string, string>) {
     throw new AppError('Order not found', 404);
   }
 
+  // Idempotency: already processed via IPN or previous return
   if (order.paymentStatus === 'PAID') {
     return { order, alreadyProcessed: true };
   }
 
   const isSuccessful = result.responseCode === '00';
 
-  const updatedOrder = await prisma.order.update({
-    where: { id: result.txnRef },
-    data: {
-      paymentStatus: isSuccessful ? 'PAID' : 'FAILED',
-      status: isSuccessful ? 'CONFIRMED' : order.status,
-      vnp_TxnRef: result.txnRef,
-      vnp_TransactionNo: result.transactionNo,
-      vnp_ResponseCode: result.responseCode,
-      vnp_BankCode: result.bankCode,
-      paidAt: isSuccessful ? new Date() : null,
-    },
+  // Use transaction for atomic update + log
+  const updatedOrder = await prisma.$transaction(async (tx) => {
+    const updated = await tx.order.update({
+      where: { id: result.txnRef },
+      data: {
+        paymentStatus: isSuccessful ? 'PAID' : 'FAILED',
+        status: isSuccessful ? 'CONFIRMED' : order.status,
+        vnp_TxnRef: result.txnRef,
+        vnp_TransactionNo: result.transactionNo,
+        vnp_ResponseCode: result.responseCode,
+        vnp_BankCode: result.bankCode,
+        paidAt: isSuccessful ? new Date() : null,
+      },
+    });
+
+    // Log payment transaction
+    await tx.paymentTransaction.create({
+      data: {
+        orderId: order.id,
+        gateway: 'VNPAY',
+        type: 'RETURN',
+        amount: result.amount,
+        status: isSuccessful ? 'SUCCESS' : 'FAILED',
+        gatewayRef: result.transactionNo,
+        requestPayload: JSON.stringify(query),
+      },
+    });
+
+    return updated;
   });
+
+  // Decrement stock AFTER successful payment (only if IPN hasn't already done it)
+  if (isSuccessful) {
+    try {
+      await confirmPaymentStock(order.id);
+    } catch (e) {
+      // Stock may already be decremented by IPN - ignore if so
+    }
+  }
 
   return { order: updatedOrder, alreadyProcessed: false };
 }
@@ -145,6 +174,72 @@ export async function getPaymentUrlForOrder(orderId: string, userId: string, ipA
   });
 
   return { paymentUrl };
+}
+
+export async function processIpn(query: Record<string, string>) {
+  const result = verifyReturnUrl(query);
+
+  if (!result.isValid) {
+    return { rspCode: '97', message: 'Invalid signature' };
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: result.txnRef },
+  });
+
+  if (!order) {
+    return { rspCode: '01', message: 'Order not found' };
+  }
+
+  // Amount verification
+  const vnpAmount = result.amount;
+  const orderAmount = Number(order.total);
+  if (Math.abs(vnpAmount - orderAmount) > 1) {
+    return { rspCode: '04', message: 'Invalid amount' };
+  }
+
+  // Idempotency: already processed
+  if (order.paymentStatus === 'PAID') {
+    return { rspCode: '02', message: 'Order already confirmed' };
+  }
+
+  const isSuccessful = result.responseCode === '00';
+
+  // Use transaction for atomic update + log
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
+      where: { id: result.txnRef },
+      data: {
+        paymentStatus: isSuccessful ? 'PAID' : 'FAILED',
+        status: isSuccessful ? 'CONFIRMED' : order.status,
+        vnp_TxnRef: result.txnRef,
+        vnp_TransactionNo: result.transactionNo,
+        vnp_ResponseCode: result.responseCode,
+        vnp_BankCode: result.bankCode,
+        paidAt: isSuccessful ? new Date() : null,
+      },
+    });
+
+    // Log payment transaction
+    await tx.paymentTransaction.create({
+      data: {
+        orderId: order.id,
+        gateway: 'VNPAY',
+        type: 'IPN',
+        amount: vnpAmount,
+        status: isSuccessful ? 'SUCCESS' : 'FAILED',
+        gatewayRef: result.transactionNo,
+        requestPayload: JSON.stringify(query),
+      },
+    });
+  });
+
+  // Decrement stock AFTER successful payment confirmation
+  if (isSuccessful) {
+    await confirmPaymentStock(order.id);
+  }
+
+  return { rspCode: '00', message: 'Confirm Success' };
 }
 
 function formatDate(date: Date): string {
