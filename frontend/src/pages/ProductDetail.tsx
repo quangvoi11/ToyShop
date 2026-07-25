@@ -7,6 +7,7 @@ import { getWishlist, addToWishlist, removeFromWishlist } from '../api/wishlist'
 import { getProductReviews, createReview } from '../api/reviews';
 import { addToCartThunk } from '../store/slices/cartSlice';
 import { formatCurrency } from '../lib/utils';
+import { toast } from 'sonner';
 import { useAppDispatch, useAppSelector } from '../store';
 import type { WishlistItemSummary, ReviewSummary } from '../../../shared/types';
 
@@ -25,6 +26,7 @@ export default function ProductDetail() {
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+
   const [activeImg, setActiveImg] = useState(0);
   const [wished, setWished] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
@@ -59,6 +61,10 @@ export default function ProductDetail() {
     onSuccess: () => {
       setWished(true);
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      toast.success('Đã thêm vào yêu thích');
+    },
+    onError: () => {
+      toast.error('Không thể thêm vào yêu thích');
     },
   });
 
@@ -67,6 +73,10 @@ export default function ProductDetail() {
     onSuccess: () => {
       setWished(false);
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      toast.success('Đã xóa khỏi yêu thích');
+    },
+    onError: () => {
+      toast.error('Không thể xóa khỏi yêu thích');
     },
   });
 
@@ -77,13 +87,21 @@ export default function ProductDetail() {
       setReviewRating(5);
       refetchReviews();
       queryClient.invalidateQueries({ queryKey: ['product', slug] });
+      toast.success('Đã gửi đánh giá');
+    },
+    onError: (err) => {
+      toast.error((err as Error).message || 'Không thể gửi đánh giá');
     },
   });
 
-  const handleAddToCart = () => {
-    dispatch(addToCartThunk({ productId: product.id, quantity }));
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const handleAddToCart = async () => {
+    try {
+      await dispatch(addToCartThunk({ productId: product.id, quantity })).unwrap();
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } catch (err) {
+      toast.error((err as { message?: string })?.message || 'Không thể thêm vào giỏ hàng');
+    }
   };
 
   if (isLoading) {
@@ -217,7 +235,13 @@ export default function ProductDetail() {
                 <Plus className="h-4 w-4" />
               </button>
             </div>
-            <span className="text-sm text-gray-500">{product.stock} sản phẩm có sẵn</span>
+            <p className="text-sm text-gray-500">
+              {product.stock > 0 ? (
+                <>Còn <span className="font-medium text-green-600">{product.stock}</span> sản phẩm</>
+              ) : (
+                <span className="font-medium text-red-500">Hết hàng</span>
+              )}
+            </p>
             {product.viewCount > 0 && (
               <span className="text-sm text-gray-400">| {product.viewCount} lượt xem</span>
             )}
@@ -227,10 +251,11 @@ export default function ProductDetail() {
           <div className="flex gap-3">
             <button
               onClick={handleAddToCart}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-all ${added ? 'bg-green-600' : 'bg-primary hover:bg-primary/90'}`}
+              disabled={product.stock <= 0}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-all ${added ? 'bg-green-600' : 'bg-primary hover:bg-primary/90'} disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               <ShoppingCart className="h-5 w-5" />
-              {added ? 'Đã thêm ✓' : 'Thêm vào giỏ hàng'}
+              {product.stock <= 0 ? 'Hết hàng' : added ? 'Đã thêm ✓' : 'Thêm vào giỏ hàng'}
             </button>
             <button
               onClick={handleWishlistToggle}

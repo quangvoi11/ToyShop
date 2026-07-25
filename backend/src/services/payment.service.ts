@@ -2,8 +2,6 @@ import crypto from 'crypto';
 import { config } from '../config';
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
-import { confirmPaymentStock } from './order.service';
-
 function sortObject(obj: Record<string, string>): Record<string, string> {
   const sorted: Record<string, string> = {};
   const keys = Object.keys(obj).sort();
@@ -70,6 +68,14 @@ export function verifyReturnUrl(query: Record<string, string>): {
   const hmac = crypto.createHmac('sha512', config.vnpay.hashSecret);
   const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
+  console.log('[VNPay Verify]', {
+    received: secureHash?.substring(0, 16) + '...',
+    computed: signed.substring(0, 16) + '...',
+    match: secureHash === signed,
+    paramsCount: Object.keys(sorted).length,
+    signDataPreview: signData.substring(0, 200),
+  });
+
   return {
     isValid: secureHash === signed,
     responseCode: query['vnp_ResponseCode'] || '',
@@ -133,15 +139,6 @@ export async function processReturn(query: Record<string, string>) {
 
     return updated;
   });
-
-  // Decrement stock AFTER successful payment (only if IPN hasn't already done it)
-  if (isSuccessful) {
-    try {
-      await confirmPaymentStock(order.id);
-    } catch (e) {
-      // Stock may already be decremented by IPN - ignore if so
-    }
-  }
 
   return { order: updatedOrder, alreadyProcessed: false };
 }
@@ -233,11 +230,6 @@ export async function processIpn(query: Record<string, string>) {
       },
     });
   });
-
-  // Decrement stock AFTER successful payment confirmation
-  if (isSuccessful) {
-    await confirmPaymentStock(order.id);
-  }
 
   return { rspCode: '00', message: 'Confirm Success' };
 }

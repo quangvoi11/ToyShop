@@ -5,6 +5,7 @@ import { getWishlist, removeFromWishlist } from '../api/wishlist';
 import { addToCartThunk } from '../store/slices/cartSlice';
 import { formatCurrency } from '../lib/utils';
 import { store } from '../store';
+import { toast } from 'sonner';
 import type { WishlistItemSummary } from '../../../shared/types';
 
 export default function Wishlist() {
@@ -17,7 +18,13 @@ export default function Wishlist() {
 
   const removeMut = useMutation({
     mutationFn: removeFromWishlist,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['wishlist'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      toast.success('Đã xóa khỏi yêu thích');
+    },
+    onError: () => {
+      toast.error('Không thể xóa khỏi yêu thích');
+    },
   });
 
   if (isLoading) {
@@ -75,7 +82,14 @@ export default function Wishlist() {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => store.dispatch(addToCartThunk({ productId: item.productId, quantity: 1 }))}
+                onClick={async () => {
+                  try {
+                    await store.dispatch(addToCartThunk({ productId: item.productId, quantity: 1 })).unwrap();
+                    toast.success('Đã thêm vào giỏ hàng');
+                  } catch (err) {
+                    toast.error((err as { message?: string })?.message || 'Không thể thêm vào giỏ hàng');
+                  }
+                }}
                 className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-primary py-2 text-xs font-medium text-white hover:bg-primary/90"
               >
                 <ShoppingCart className="h-3.5 w-3.5" /> Thêm giỏ

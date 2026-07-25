@@ -6,11 +6,10 @@ import { createAddressSchema } from '../validators/address.validator';
 
 const router = Router();
 
-router.use(authenticate);
-router.get('/addresses', getAddresses);
-router.get('/addresses/:id', getById);
-router.post('/addresses', validate(createAddressSchema), create);
-router.put('/addresses/:id', validate(createAddressSchema.partial()), update);
-router.delete('/addresses/:id', remove);
+router.get('/addresses', authenticate, getAddresses);
+router.get('/addresses/:id', authenticate, getById);
+router.post('/addresses', authenticate, validate(createAddressSchema), create);
+router.put('/addresses/:id', authenticate, validate(createAddressSchema.partial()), update);
+router.delete('/addresses/:id', authenticate, remove);
 
 export default router;

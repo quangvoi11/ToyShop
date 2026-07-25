@@ -42,14 +42,42 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch {
         refreshPromise = null;
+
+        try {
+          const sessionsRaw = localStorage.getItem('auth_sessions');
+          const activeRole = localStorage.getItem('active_role');
+          if (sessionsRaw && activeRole) {
+            const sessions = JSON.parse(sessionsRaw);
+            delete sessions[activeRole];
+
+            const remaining = Object.keys(sessions);
+            if (remaining.length > 0) {
+              const newRole = remaining[0];
+              localStorage.setItem('auth_sessions', JSON.stringify(sessions));
+              localStorage.setItem('active_role', newRole);
+              localStorage.setItem('accessToken', sessions[newRole].accessToken);
+              localStorage.setItem('refreshToken', sessions[newRole].refreshToken);
+              localStorage.setItem('user', JSON.stringify(sessions[newRole].user));
+              return Promise.reject(error);
+            }
+          }
+        } catch {
+          // fall through to full cleanup
+        }
+
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('auth_sessions');
+        localStorage.removeItem('active_role');
         window.location.href = '/login';
         return Promise.reject(error);
       }
     }
 
+    if (error.response?.data?.message) {
+      error.message = error.response.data.message;
+    }
     return Promise.reject(error);
   },
 );

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { logout, fetchProfile } from '../../store/slices/authSlice';
+import { logout, fetchProfile, switchSession } from '../../store/slices/authSlice';
 
 const categories = [
   { name: 'LEGO', slug: 'lego' },
@@ -17,7 +17,9 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user, accessToken } = useAppSelector((s) => s.auth);
+  const { user, accessToken, sessions, activeRole } = useAppSelector((s) => s.auth);
+  const sessionRoles = Object.keys(sessions);
+  const hasMultipleSessions = sessionRoles.length > 1;
   const cartItems = useAppSelector((s) => s.cart.items);
 
   useEffect(() => {
@@ -56,8 +58,8 @@ export default function Header() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
-            <span className="text-3xl">🧸</span>
-            <span>ToyShop</span>
+            <img src="/images/logo-header.png" alt="Ele Store" className="h-20 w-auto" />
+            <span className="text-xl text-blue-600">Ele Store</span>
           </Link>
 
           {/* Search bar */}
@@ -87,7 +89,48 @@ export default function Header() {
                   <User className="h-5 w-5" />
                   <span className="hidden text-sm md:inline">{user?.firstName}</span>
                 </button>
-                <div className="invisible absolute right-0 top-full z-50 w-48 rounded-lg border bg-white py-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
+                <div className="invisible absolute right-0 top-full z-50 w-56 rounded-lg border bg-white py-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
+                  <div className="border-b px-4 py-2">
+                    <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  </div>
+
+                  {hasMultipleSessions && (
+                    <>
+                      <div className="px-4 py-1.5">
+                        <p className="text-xs font-medium uppercase text-gray-400">Chuyển tài khoản</p>
+                      </div>
+                      {sessionRoles.map((role) => {
+                        const session = sessions[role];
+                        const isActive = role === activeRole;
+                        return (
+                          <button
+                            key={role}
+                            onClick={() => {
+                          if (!isActive) {
+                            dispatch(switchSession(role));
+                            navigate(role === 'admin' ? '/admin' : '/');
+                          }
+                        }}
+                            className={`flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 ${
+                              isActive ? 'cursor-default bg-gray-50 text-gray-400' : ''
+                            }`}
+                          >
+                            <span>{role === 'admin' ? '🔐' : '👤'}</span>
+                            <span>{session.user.firstName} ({role === 'admin' ? 'Admin' : 'Customer'})</span>
+                            {isActive && <span className="ml-auto text-xs text-gray-400">đang dùng</span>}
+                          </button>
+                        );
+                      })}
+                      <hr className="my-1" />
+                    </>
+                  )}
+
+                  {user?.role === 'ADMIN' && !hasMultipleSessions && (
+                    <Link to="/admin" className="block px-4 py-2 text-sm font-medium text-blue-600 hover:bg-gray-50">
+                      Quản trị
+                    </Link>
+                  )}
                   <Link to="/profile" className="block px-4 py-2 text-sm hover:bg-gray-50">
                     Tài khoản
                   </Link>

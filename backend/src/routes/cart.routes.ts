@@ -6,10 +6,9 @@ import { addToCartSchema, updateCartItemSchema } from '../validators/cart.valida
 
 const router = Router();
 
-router.use(authenticate);
-router.get('/cart', getCart);
-router.post('/cart/items', validate(addToCartSchema), addItem);
-router.put('/cart/items/:itemId', validate(updateCartItemSchema), updateItem);
-router.delete('/cart/items/:itemId', removeItem);
+router.get('/cart', authenticate, getCart);
+router.post('/cart/items', authenticate, validate(addToCartSchema), addItem);
+router.put('/cart/items/:itemId', authenticate, validate(updateCartItemSchema), updateItem);
+router.delete('/cart/items/:itemId', authenticate, removeItem);
 
 export default router;

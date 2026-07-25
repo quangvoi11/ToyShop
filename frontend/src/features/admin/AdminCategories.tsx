@@ -3,9 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Edit2, Trash2, Search, FolderTree, X, Save, Loader2, ChevronRight, ChevronDown,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
-  getAdminCategoryTree, getAdminCategories, getAdminCategory, createCategory, updateCategory, deleteCategory,
-  uploadImage, type CategoryInput,
+   getAdminCategoryTree, getAdminCategories, getAdminCategory, createCategory, updateCategory, deleteCategory,
+   uploadImage, type CategoryInput,
 } from '../../api/admin';
 
 interface CategoryNode {
@@ -117,10 +118,11 @@ export default function AdminCategories() {
       queryClient.invalidateQueries({ queryKey: ['admin-category-tree'] });
       queryClient.invalidateQueries({ queryKey: ['admin-category-flat'] });
       setShowModal(false);
+      toast.success('Đã tạo danh mục');
     },
     onError: (err: Error) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      alert(axiosErr?.response?.data?.message || 'Tạo danh mục thất bại');
+      toast.error(axiosErr?.response?.data?.message || 'Tạo danh mục thất bại');
     },
   });
 
@@ -130,10 +132,11 @@ export default function AdminCategories() {
       queryClient.invalidateQueries({ queryKey: ['admin-category-tree'] });
       queryClient.invalidateQueries({ queryKey: ['admin-category-flat'] });
       setShowModal(false);
+      toast.success('Đã cập nhật danh mục');
     },
     onError: (err: Error) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      alert(axiosErr?.response?.data?.message || 'Cập nhật danh mục thất bại');
+      toast.error(axiosErr?.response?.data?.message || 'Cập nhật danh mục thất bại');
     },
   });
 
@@ -142,10 +145,11 @@ export default function AdminCategories() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-category-tree'] });
       queryClient.invalidateQueries({ queryKey: ['admin-category-flat'] });
+      toast.success('Đã xóa danh mục');
     },
     onError: (err: Error) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      alert(axiosErr?.response?.data?.message || 'Ẩn danh mục thất bại');
+      toast.error(axiosErr?.response?.data?.message || 'Ẩn danh mục thất bại');
     },
   });
 
@@ -157,15 +161,16 @@ export default function AdminCategories() {
     try {
       const url = await uploadImage(file, 'toyshop/categories');
       setForm((f) => ({ ...f, image: url }));
+      toast.success('Đã tải ảnh lên');
     } catch {
-      alert('Tải ảnh thất bại');
+      toast.error('Tải ảnh thất bại');
     } finally {
       setUploading(false);
     }
   };
 
   const validateForm = () => {
-    if (!form.name.trim()) { alert('Vui lòng nhập tên danh mục'); return false; }
+    if (!form.name.trim()) { toast.error('Vui lòng nhập tên danh mục'); return false; }
     return true;
   };
 

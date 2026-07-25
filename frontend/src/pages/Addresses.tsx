@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, MapPin, Check, X } from 'lucide-react';
 import { getAddresses, createAddress, updateAddress, deleteAddress } from '../api/addresses';
+import { toast } from 'sonner';
 
 interface AddressData {
   id: string;
@@ -45,6 +46,10 @@ export default function Addresses() {
       queryClient.invalidateQueries({ queryKey: ['addresses'] });
       setShowModal(false);
       setForm(emptyForm);
+      toast.success('Đã thêm địa chỉ');
+    },
+    onError: (err) => {
+      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể thêm địa chỉ');
     },
   });
 
@@ -55,17 +60,30 @@ export default function Addresses() {
       setShowModal(false);
       setEditingId(null);
       setForm(emptyForm);
+      toast.success('Đã cập nhật địa chỉ');
+    },
+    onError: (err) => {
+      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể cập nhật địa chỉ');
     },
   });
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteAddress(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['addresses'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] });
+      toast.success('Đã xóa địa chỉ');
+    },
+    onError: () => {
+      toast.error('Không thể xóa địa chỉ');
+    },
   });
 
   const setDefaultMut = useMutation({
     mutationFn: (id: string) => updateAddress(id, { isDefault: true }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['addresses'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['addresses'] });
+      toast.success('Đã đặt làm địa chỉ mặc định');
+    },
   });
 
   const handleAdd = () => {

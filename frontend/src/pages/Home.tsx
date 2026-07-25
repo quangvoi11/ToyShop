@@ -85,7 +85,9 @@ export default function Home() {
                   {banner.cta}
                 </Link>
               </div>
-              <div className="hidden text-8xl md:block">🧸</div>
+              <div className="hidden md:block">
+                <img src="/images/logo-hero.png" alt="Ele Store" className="h-56 w-auto opacity-95" />
+              </div>
             </div>
           ))}
         </div>
@@ -191,8 +193,8 @@ export default function Home() {
       {/* Promo banner */}
       <section className="bg-gradient-to-r from-purple-600 to-indigo-600 py-16 text-center text-white">
         <div className="container-main">
-          <h2 className="mb-4 text-3xl font-bold md:text-4xl">🎉 Khai trương ToyShop</h2>
-          <p className="mb-8 text-lg text-white/90">Giảm đến 20% cho đơn hàng đầu tiên. Mã: <span className="rounded-lg bg-white/20 px-4 py-1 font-mono font-bold">TOYSHOP20</span></p>
+          <h2 className="mb-4 text-3xl font-bold md:text-4xl">🎉 Khai trương Ele Store</h2>
+          <p className="mb-8 text-lg text-white/90">Giảm đến 20% cho đơn hàng đầu tiên. Mã: <span className="rounded-lg bg-white/20 px-4 py-1 font-mono font-bold">ELESTORE20</span></p>
           <Link to="/products" className="inline-block rounded-full bg-white px-10 py-3 font-semibold text-purple-700 shadow-lg transition-transform hover:scale-105">
             Mua sắm ngay
           </Link>

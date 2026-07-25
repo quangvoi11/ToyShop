@@ -8,6 +8,7 @@ import {
 } from '../../api/admin';
 import { formatCurrency } from '../../lib/utils';
 import { ORDER_STATUS_LABELS } from '../../../../shared/constants';
+import { toast } from 'sonner';
 
 const statusBadgeColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -90,6 +91,10 @@ export default function AdminOrders() {
       setShowCancelPrompt(false);
       setCancelReason('');
       setPendingActionStatus(null);
+      toast.success('Đã cập nhật trạng thái');
+    },
+    onError: (err) => {
+      toast.error((err as Error).message || 'Không thể cập nhật trạng thái');
     },
   });
 
@@ -100,6 +105,10 @@ export default function AdminOrders() {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
       queryClient.invalidateQueries({ queryKey: ['admin-order'] });
       setSelectedId(null);
+      toast.success('Đã cập nhật thanh toán');
+    },
+    onError: (err) => {
+      toast.error((err as Error).message || 'Không thể cập nhật thanh toán');
     },
   });
 

@@ -21,7 +21,7 @@ async function main() {
       email: 'admin@toyshop.com',
       password: adminPassword,
       firstName: 'Admin',
-      lastName: 'ToyShop',
+      lastName: 'Admin',
       role: 'ADMIN',
       isActive: true,
     },

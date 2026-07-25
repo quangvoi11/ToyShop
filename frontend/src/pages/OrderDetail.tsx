@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Package, XCircle, Check } from 'lucide-react';
 import { getOrderById, cancelOrder, retryPayment } from '../api/orders';
 import { formatCurrency } from '../lib/utils';
+import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-700',
@@ -68,7 +69,13 @@ export default function OrderDetail() {
 
   const cancelMut = useMutation({
     mutationFn: () => cancelOrder(id!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['order', id] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
+      toast.success('Đã hủy đơn hàng');
+    },
+    onError: (err) => {
+      toast.error((err as Error).message || 'Không thể hủy đơn hàng');
+    },
   });
 
   const retryPaymentMut = useMutation({
@@ -77,6 +84,9 @@ export default function OrderDetail() {
       if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
       }
+    },
+    onError: () => {
+      toast.error('Không thể tạo link thanh toán');
     },
   });
 

@@ -4,10 +4,9 @@ import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
-router.use(authenticate);
-router.post('/orders', create);
-router.get('/orders', getMyOrders);
-router.get('/orders/:id', getById);
-router.patch('/orders/:id/cancel', cancelOrder);
+router.post('/orders', authenticate, create);
+router.get('/orders', authenticate, getMyOrders);
+router.get('/orders/:id', authenticate, getById);
+router.patch('/orders/:id/cancel', authenticate, cancelOrder);
 
 export default router;

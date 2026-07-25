@@ -7,7 +7,10 @@ export default function Footer() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* About */}
           <div>
-            <h3 className="mb-4 text-lg font-bold text-white">🧸 ToyShop</h3>
+            <div className="mb-4 flex items-center gap-2">
+              <img src="/images/logo-header.png" alt="Ele Store" className="h-10 w-auto" />
+              <h3 className="text-xl font-bold text-white">Ele Store</h3>
+            </div>
             <p className="mb-4 text-sm leading-relaxed">
               Cửa hàng đồ chơi trực tuyến hàng đầu Việt Nam. Cam kết sản phẩm chính hãng, giao hàng toàn quốc.
             </p>
@@ -57,7 +60,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 border-t border-gray-800 pt-8 text-center text-sm">
-          <p>© 2026 ToyShop. Tất cả quyền được bảo lưu.</p>
+          <p>© 2026 Ele Store. Tất cả quyền được bảo lưu.</p>
         </div>
       </div>
     </footer>

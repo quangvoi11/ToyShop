@@ -9,6 +9,7 @@ export interface CartProduct {
   basePrice: number;
   salePrice: number | null;
   stock: number;
+  images?: { url: string }[];
 }
 
 export interface CartItem {

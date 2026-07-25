@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Package, LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Tag, FolderTree,
   ChevronLeft, ChevronRight, ChevronDown, Menu,
 } from 'lucide-react';
 import { RootState } from '../../store';
-import { logout } from '../../store/slices/authSlice';
+import { logout, switchSession } from '../../store/slices/authSlice';
 
 interface MenuItem {
   icon?: typeof Package;
@@ -135,7 +135,8 @@ export default function AdminLayout() {
   const location = useLocation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((s: RootState) => s.auth);
+  const { user, sessions, activeRole } = useSelector((s: RootState) => s.auth);
+  const hasCustomerSession = !!sessions['customer'];
 
   useEffect(() => {
     const initial: Record<string, boolean> = {};
@@ -153,7 +154,36 @@ export default function AdminLayout() {
   }, [location.pathname]);
 
   if (!user || user.role !== 'ADMIN') {
-    return <Navigate to="/login" replace />;
+    const currentSession = activeRole ? sessions[activeRole] : null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <div className="max-w-md rounded-xl bg-white p-8 text-center shadow-lg">
+          <img src="/images/logo-admin.png" alt="Ele Store" className="mx-auto mb-4 h-12 w-auto" />
+          <h2 className="mb-2 text-lg font-bold">Cần quyền Admin</h2>
+          <p className="mb-6 text-sm text-gray-500">
+            {currentSession ? `Bạn đang đăng nhập với tài khoản ${currentSession.user.firstName} (${currentSession.user.role}).` : 'Vui lòng đăng nhập với tài khoản Admin.'}
+          </p>
+          {hasCustomerSession ? (
+            <button
+              onClick={() => { dispatch(switchSession('admin')); }}
+              className="mb-3 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Chuyển sang Admin
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="mb-3 block w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Đăng nhập với tài khoản khác
+            </Link>
+          )}
+          <Link to="/" className="block text-sm text-blue-600 hover:underline">
+            Quay về trang chủ
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const toggleGroup = (label: string) =>
@@ -181,11 +211,11 @@ export default function AdminLayout() {
       <div className="flex h-16 items-center justify-between border-b border-gray-800 px-4">
         {!collapsed && (
           <Link to="/admin" className="flex items-center gap-2 text-lg font-bold text-white">
-            <span>🧸</span>
-            <span>Admin</span>
+            <img src="/images/logo-admin.png" alt="Ele Store" className="h-8 w-auto" />
+            <span className="text-base">Admin</span>
           </Link>
         )}
-        {collapsed && <span className="mx-auto text-lg">🧸</span>}
+        {collapsed && <img src="/images/logo-admin.png" alt="Ele Store" className="mx-auto h-7 w-auto" />}
       </div>
 
       {/* Nav */}
@@ -202,7 +232,7 @@ export default function AdminLayout() {
           </div>
         )}
         <button
-          onClick={() => { dispatch(logout()); navigate('/login'); }}
+          onClick={() => { dispatch(logout()); navigate('/'); }}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-red-400"
           title={collapsed ? 'Đăng xuất' : undefined}
         >
@@ -241,7 +271,10 @@ export default function AdminLayout() {
           <button onClick={() => setMobileOpen(true)}>
             <Menu className="h-6 w-6" />
           </button>
-          <span className="text-lg font-bold">🧸 Admin</span>
+          <div className="flex items-center gap-2">
+            <img src="/images/logo-admin.png" alt="Ele Store" className="h-7 w-auto" />
+            <span className="text-base font-bold">Ele Store Admin</span>
+          </div>
         </header>
 
         {/* Page content */}

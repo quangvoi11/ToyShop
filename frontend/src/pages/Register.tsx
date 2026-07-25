@@ -45,9 +45,9 @@ export default function Register() {
       <div className="w-full max-w-md">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <div className="mb-8 text-center">
-            <span className="text-4xl">🧸</span>
+            <img src="/images/logo-header.png" alt="Ele Store" className="mx-auto h-16 w-auto" />
             <h1 className="mt-3 text-2xl font-bold">Đăng ký</h1>
-            <p className="mt-1 text-sm text-gray-500">Tạo tài khoản ToyShop</p>
+            <p className="mt-1 text-sm text-gray-500">Tạo tài khoản Ele Store</p>
           </div>
 
           {displayError && (

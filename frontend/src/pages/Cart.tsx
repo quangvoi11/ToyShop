@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '../store';
 import { fetchCart, updateCartItemThunk, removeCartItemThunk } from '../store/slices/cartSlice';
 import type { CartItem } from '../store/slices/cartSlice';
 import { formatCurrency } from '../lib/utils';
+import { toast } from 'sonner';
 
 export default function Cart() {
   const dispatch = useAppDispatch();
@@ -61,8 +62,12 @@ export default function Cart() {
         <div className="lg:col-span-2 space-y-4">
           {items.map((item: CartItem) => (
             <div key={item.id} className="flex gap-4 rounded-xl border bg-white p-4">
-              <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
-                <span className="text-3xl">🧱</span>
+              <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+                {item.product?.images?.[0]?.url ? (
+                  <img src={item.product.images[0].url} alt={item.product.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-3xl">🧱</span>
+                )}
               </div>
               <div className="flex flex-1 flex-col justify-between">
                 <div>
@@ -77,33 +82,42 @@ export default function Cart() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center rounded-lg border">
                     <button
-                      onClick={() =>
-                        dispatch(
-                          updateCartItemThunk({
-                            itemId: item.id,
-                            quantity: Math.max(1, item.quantity - 1),
-                          }) ,
-                        )
-                      }
+                      onClick={async () => {
+                        try {
+                          await dispatch(
+                            updateCartItemThunk({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) }),
+                          ).unwrap();
+                        } catch (err) {
+                          toast.error((err as { message?: string })?.message || 'Không thể cập nhật số lượng');
+                        }
+                      }}
                       className="p-1.5 hover:bg-gray-50"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
                     <span className="w-10 text-center text-sm">{item.quantity}</span>
                     <button
-                      onClick={() =>
-                        dispatch(
-                          updateCartItemThunk({
-                            itemId: item.id,
-                            quantity: item.quantity + 1,
-                          }) ,
-                        )
-                      }
-                      className="p-1.5 hover:bg-gray-50"
+                      onClick={async () => {
+                        try {
+                          await dispatch(
+                            updateCartItemThunk({ itemId: item.id, quantity: item.quantity + 1 }),
+                          ).unwrap();
+                        } catch (err) {
+                          toast.error((err as { message?: string })?.message || 'Không thể cập nhật số lượng');
+                        }
+                      }}
+                      disabled={item.quantity >= (item.product?.stock ?? Infinity)}
+                      className="p-1.5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
+                  {item.product?.stock !== undefined && item.product.stock <= 5 && item.product.stock > 0 && (
+                    <p className="text-xs text-orange-500">Chỉ còn {item.product.stock} sản phẩm</p>
+                  )}
+                  {item.product?.stock === 0 && (
+                    <p className="text-xs font-medium text-red-500">Hết hàng</p>
+                  )}
                   <div className="flex items-center gap-4">
                     <p className="font-bold text-primary">
                       {formatCurrency(
@@ -112,7 +126,14 @@ export default function Cart() {
                       )}
                     </p>
                     <button
-                      onClick={() => dispatch(removeCartItemThunk(item.id) )}
+                      onClick={async () => {
+                        try {
+                          await dispatch(removeCartItemThunk(item.id)).unwrap();
+                          toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
+                        } catch {
+                          toast.error('Không thể xóa sản phẩm');
+                        }
+                      }}
                       className="text-gray-400 hover:text-red-500"
                     >
                       <Trash2 className="h-4 w-4" />

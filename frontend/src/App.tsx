@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './features/admin/AdminLayout';
 import AdminDashboard from './features/admin/AdminDashboard';
@@ -23,10 +24,13 @@ import Addresses from './pages/Addresses';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import PaymentResult from './pages/PaymentResult';
+import AdminLogin from './pages/AdminLogin';
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Toaster position="top-right" richColors closeButton />
+      <Routes>
       <Route element={<MainLayout />}>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
@@ -50,7 +54,9 @@ export default function App() {
         </Route>
       </Route>
 
-      <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+      <Route path="/admin/login" element={<AdminLogin />} />
+
+      <Route element={<ProtectedRoute />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/products" element={<AdminProducts />} />
@@ -61,5 +67,6 @@ export default function App() {
         </Route>
       </Route>
     </Routes>
+    </>
   );
 }

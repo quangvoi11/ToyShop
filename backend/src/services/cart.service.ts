@@ -8,7 +8,7 @@ export async function getCart(userId: string) {
       items: {
         include: {
           product: {
-            select: { id: true, name: true, slug: true, sku: true, basePrice: true, salePrice: true, stock: true },
+            select: { id: true, name: true, slug: true, sku: true, basePrice: true, salePrice: true, stock: true, images: { where: { isPrimary: true }, take: 1, select: { url: true } } },
           },
         },
       },
@@ -18,7 +18,7 @@ export async function getCart(userId: string) {
   if (!cart) {
     cart = await prisma.cart.create({
       data: { userId },
-      include: { items: { include: { product: { select: { id: true, name: true, slug: true, sku: true, basePrice: true, salePrice: true, stock: true } } } } },
+      include: { items: { include: { product: { select: { id: true, name: true, slug: true, sku: true, basePrice: true, salePrice: true, stock: true, images: { where: { isPrimary: true }, take: 1, select: { url: true } } } } } } },
     });
   }
 
@@ -41,6 +41,14 @@ export async function addItem(userId: string, productId: string, quantity: numbe
       variantId: variantId ?? null,
     },
   });
+
+  const totalQuantity = (existing?.quantity || 0) + quantity;
+  if (product.stock < totalQuantity) {
+    throw new AppError(
+      `Sản phẩm "${product.name}" không đủ tồn kho (còn ${product.stock}${existing ? `, bạn đã có ${existing.quantity} trong giỏ` : ''})`,
+      400,
+    );
+  }
 
   if (existing) {
     await prisma.cartItem.update({
@@ -66,6 +74,16 @@ export async function updateItem(userId: string, itemId: string, quantity: numbe
   if (quantity <= 0) {
     await prisma.cartItem.delete({ where: { id: itemId } });
   } else {
+    const product = await prisma.product.findUnique({
+      where: { id: item.productId },
+      select: { stock: true, name: true },
+    });
+    if (!product || product.stock < quantity) {
+      throw new AppError(
+        `Sản phẩm "${product?.name}" không đủ tồn kho (còn ${product?.stock || 0})`,
+        400,
+      );
+    }
     await prisma.cartItem.update({ where: { id: itemId }, data: { quantity } });
   }
 

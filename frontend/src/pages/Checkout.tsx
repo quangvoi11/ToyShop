@@ -8,6 +8,7 @@ import { createOrder } from '../api/orders';
 import { getAddresses, createAddress } from '../api/addresses';
 import { validateCoupon } from '../api/coupons';
 import { formatCurrency } from '../lib/utils';
+import { toast } from 'sonner';
 
 interface Address {
   id: string;
@@ -43,6 +44,7 @@ export default function Checkout() {
     valid: boolean; discountType?: string; discountValue?: number; minOrder?: number; maxDiscount?: number | null;
   } | null>(null);
   const [couponError, setCouponError] = useState('');
+  const [orderError, setOrderError] = useState('');
   const [addressForm, setAddressForm] = useState({
     label: '', street: '', ward: '', district: '', city: '', phone: '', isDefault: true,
   });
@@ -93,8 +95,10 @@ export default function Checkout() {
       setSelectedAddress(addr.id);
       setShowAddressForm(false);
       refetchAddresses();
+      toast.success('Đã lưu địa chỉ');
     } catch (err) {
-      console.error(err);
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể lưu địa chỉ';
+      toast.error(message);
     }
   };
 
@@ -126,6 +130,7 @@ export default function Checkout() {
 
   const handleSubmit = async () => {
     if (!selectedAddress) return;
+    setOrderError('');
     setSubmitting(true);
     try {
       const order = await createOrder({
@@ -141,7 +146,8 @@ export default function Checkout() {
         navigate(`/orders/${order.id}`);
       }
     } catch (err) {
-      console.error(err);
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại.';
+      setOrderError(message);
     } finally {
       setSubmitting(false);
     }
@@ -230,10 +236,22 @@ export default function Checkout() {
         <div className="lg:col-span-1">
           <div className="sticky top-24 rounded-xl border bg-white p-6">
             <h2 className="mb-4 text-lg font-semibold">Đơn hàng</h2>
+            {orderError && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                {orderError}
+                <button onClick={() => setOrderError('')} className="float-right font-medium hover:underline">×</button>
+              </div>
+            )}
             <div className="mb-4 space-y-3">
               {items.map((item: CartItem) => (
                 <div key={item.id} className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100 text-lg">🧱</div>
+                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-gray-100">
+                    {item.product?.images?.[0]?.url ? (
+                      <img src={item.product.images[0].url} alt={item.product.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-lg">🧱</span>
+                    )}
+                  </div>
                   <div className="flex-1 text-sm">
                     <p className="line-clamp-1">{item.product?.name}</p>
                     <p className="text-gray-500">x{item.quantity}</p>

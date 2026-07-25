@@ -4,9 +4,8 @@ import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
-router.use(authenticate);
-router.get('/wishlist', getWishlist);
-router.post('/wishlist', addItem);
-router.delete('/wishlist/:productId', removeItem);
+router.get('/wishlist', authenticate, getWishlist);
+router.post('/wishlist', authenticate, addItem);
+router.delete('/wishlist/:productId', authenticate, removeItem);
 
 export default router;

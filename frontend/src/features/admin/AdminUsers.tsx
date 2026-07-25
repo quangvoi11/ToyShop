@@ -4,6 +4,7 @@ import { Search, User, Eye, Lock, Unlock, X } from 'lucide-react';
 import { getAdminUsers, updateUserStatus, updateUserRole } from '../../api/admin';
 import { formatCurrency } from '../../lib/utils';
 import { ROLES_LABELS } from '../../../../shared/constants';
+import { toast } from 'sonner';
 import type { AdminUserSummary } from '../../../../shared/types';
 
 const roleStyles: Record<string, string> = {
@@ -29,6 +30,10 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setSelectedUser(null);
+      toast.success('Đã cập nhật trạng thái');
+    },
+    onError: (err) => {
+      toast.error((err as Error).message || 'Không thể cập nhật trạng thái');
     },
   });
 
@@ -37,6 +42,10 @@ export default function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       setSelectedUser(null);
+      toast.success('Đã cập nhật vai trò');
+    },
+    onError: (err) => {
+      toast.error((err as Error).message || 'Không thể cập nhật vai trò');
     },
   });
 

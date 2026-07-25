@@ -15,12 +15,11 @@ export async function sendResetEmail(to: string, resetUrl: string): Promise<void
   await transporter.sendMail({
     from: config.smtp.from,
     to,
-    subject: 'Đặt lại mật khẩu - ToyShop',
+    subject: 'Đặt lại mật khẩu - Ele Store',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
         <div style="text-align: center; padding: 24px 0;">
-          <span style="font-size: 48px;">🧸</span>
-          <h1 style="font-size: 20px; margin: 8px 0;">ToyShop</h1>
+          <h1 style="font-size: 24px; font-weight: bold; color: #2563eb; margin: 0;">Ele Store</h1>
         </div>
         <div style="background: #f9fafb; border-radius: 12px; padding: 24px;">
           <h2 style="font-size: 18px; margin: 0 0 12px;">Đặt lại mật khẩu</h2>

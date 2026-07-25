@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, Tag, X, Save, Search } from 'lucide-react';
 import { getAdminCoupons, getAdminCoupon, createCoupon, updateCoupon, deleteCoupon } from '../../api/admin';
 import { formatCurrency } from '../../lib/utils';
 import { DISCOUNT_TYPE } from '../../../../shared/constants';
+import { toast } from 'sonner';
 import type { CouponSummary, CreateCouponRequest } from '../../../../shared/types';
 
 interface CouponForm {
@@ -88,10 +89,12 @@ export default function AdminCoupons() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
       setShowModal(false);
+      toast.success('Đã tạo mã giảm giá');
     },
     onError: (err: Error) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       setErrors([axiosErr.response?.data?.message || 'Có lỗi xảy ra']);
+      toast.error(axiosErr.response?.data?.message || 'Có lỗi xảy ra');
     },
   });
 
@@ -100,10 +103,12 @@ export default function AdminCoupons() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
       setShowModal(false);
+      toast.success('Đã cập nhật mã giảm giá');
     },
     onError: (err: Error) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       setErrors([axiosErr.response?.data?.message || 'Có lỗi xảy ra']);
+      toast.error(axiosErr.response?.data?.message || 'Có lỗi xảy ra');
     },
   });
 
@@ -112,6 +117,10 @@ export default function AdminCoupons() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-coupons'] });
       setDeleteConfirm(null);
+      toast.success('Đã xóa mã giảm giá');
+    },
+    onError: () => {
+      toast.error('Không thể xóa mã giảm giá');
     },
   });
 

@@ -17,6 +17,7 @@ interface ProductImageInput {
   file?: File;
 }
 import { formatCurrency } from '../../lib/utils';
+import { toast } from 'sonner';
 
 interface ProductRow {
   id: string;
@@ -124,10 +125,11 @@ export default function AdminProducts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       setShowModal(false);
+      toast.success('Đã tạo sản phẩm');
     },
     onError: (err: Error) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      alert(axiosErr?.response?.data?.message || 'Tạo sản phẩm thất bại');
+      toast.error(axiosErr?.response?.data?.message || 'Tạo sản phẩm thất bại');
     },
   });
 
@@ -136,19 +138,23 @@ export default function AdminProducts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       setShowModal(false);
+      toast.success('Đã cập nhật sản phẩm');
     },
     onError: (err: Error) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      alert(axiosErr?.response?.data?.message || 'Cập nhật sản phẩm thất bại');
+      toast.error(axiosErr?.response?.data?.message || 'Cập nhật sản phẩm thất bại');
     },
   });
 
   const deleteMut = useMutation({
     mutationFn: deleteProduct,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-products'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast.success('Đã xóa sản phẩm');
+    },
     onError: (err: Error) => {
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      alert(axiosErr?.response?.data?.message || 'Xoá sản phẩm thất bại');
+      toast.error(axiosErr?.response?.data?.message || 'Xoá sản phẩm thất bại');
     },
   });
 
@@ -186,6 +192,7 @@ export default function AdminProducts() {
           ...f,
           images: f.images.filter((_, i) => i !== tempIdx),
         }));
+        toast.error('Tải ảnh thất bại');
       },
     });
   };
@@ -210,10 +217,10 @@ export default function AdminProducts() {
   };
 
   const validateForm = () => {
-    if (!form.name.trim()) { alert('Vui lòng nhập tên sản phẩm'); return false; }
-    if (!form.sku.trim()) { alert('Vui lòng nhập SKU'); return false; }
-    if (form.basePrice <= 0) { alert('Giá gốc phải lớn hơn 0'); return false; }
-    if (!form.categoryId) { alert('Vui lòng chọn danh mục'); return false; }
+    if (!form.name.trim()) { toast.error('Vui lòng nhập tên sản phẩm'); return false; }
+    if (!form.sku.trim()) { toast.error('Vui lòng nhập SKU'); return false; }
+    if (form.basePrice <= 0) { toast.error('Giá gốc phải lớn hơn 0'); return false; }
+    if (!form.categoryId) { toast.error('Vui lòng chọn danh mục'); return false; }
     return true;
   };
 
