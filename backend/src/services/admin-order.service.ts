@@ -1,6 +1,7 @@
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
 import { Prisma } from '@prisma/client';
+import { restoreStockOnCancel } from './order.service';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
@@ -82,6 +83,11 @@ export async function updateStatus(id: string, status: string, cancelReason?: st
 
   if (status === 'CANCELLED' && !cancelReason) {
     throw new AppError('Cancel reason is required when cancelling order', 400);
+  }
+
+  // Restore stock when cancelling an order
+  if (status === 'CANCELLED') {
+    await restoreStockOnCancel(id);
   }
 
   const data: Prisma.OrderUpdateInput = { status };
