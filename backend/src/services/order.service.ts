@@ -64,6 +64,21 @@ export async function create(data: {
 
   const orderCode = `TS${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
+  // Validate stock availability before creating order
+  for (const item of cart.items) {
+    const product = await prisma.product.findUnique({
+      where: { id: item.product.id },
+      select: { stock: true, name: true },
+    });
+
+    if (!product || product.stock < item.quantity) {
+      throw new AppError(
+        `Sản phẩm "${item.product.name}" không đủ tồn kho (còn ${product?.stock || 0})`,
+        400
+      );
+    }
+  }
+
   const order = await prisma.$transaction(async (tx) => {
     const created = await tx.order.create({
       data: {
@@ -88,12 +103,8 @@ export async function create(data: {
       });
     }
 
-    for (const item of cart.items) {
-      await tx.product.update({
-        where: { id: item.product.id },
-        data: { soldCount: { increment: item.quantity } },
-      });
-    }
+      // Stock is decremented when payment is confirmed (in payment.service.ts)
+    // This prevents stock loss when payment fails
 
     await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
     return created;
@@ -140,6 +151,9 @@ export async function cancelOrder(userId: string, orderId: string, reason?: stri
     throw new AppError('Cannot cancel order in current status', 400);
   }
 
+  // Restore stock before cancelling
+  await restoreStockOnCancel(orderId);
+
   return prisma.order.update({
     where: { id: orderId },
     data: {
@@ -147,5 +161,72 @@ export async function cancelOrder(userId: string, orderId: string, reason?: stri
       cancelledAt: new Date(),
       cancelReason: reason || null,
     },
+  });
+}
+
+export async function confirmPaymentStock(orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  });
+
+  if (!order) throw new AppError('Order not found', 404);
+
+  // Idempotency: check if stock was already decremented
+  const existingTx = await prisma.paymentTransaction.findFirst({
+    where: { orderId, status: 'SUCCESS', type: { in: ['IPN', 'RETURN'] } },
+  });
+  if (existingTx && order.paidAt) return;
+
+  await prisma.$transaction(async (tx) => {
+    // Re-check inside transaction to prevent race condition
+    const currentOrder = await tx.order.findUnique({ where: { id: orderId } });
+    if (currentOrder?.paymentStatus !== 'PAID') {
+      throw new AppError('Order payment not confirmed', 400);
+    }
+
+    for (const item of order.items) {
+      const product = await tx.product.findUnique({
+        where: { id: item.productId },
+        select: { stock: true },
+      });
+
+      if (!product || product.stock < item.quantity) {
+        throw new AppError(`Insufficient stock for product ${item.productId}`, 400);
+      }
+
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          stock: { decrement: item.quantity },
+          soldCount: { increment: item.quantity },
+        },
+      });
+    }
+  });
+}
+
+export async function restoreStockOnCancel(orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  });
+
+  if (!order) throw new AppError('Order not found', 404);
+
+  // Only restore stock if order was previously confirmed (stock was decremented)
+  const wasStockDecremented = order.status !== 'PENDING';
+  if (!wasStockDecremented) return;
+
+  await prisma.$transaction(async (tx) => {
+    for (const item of order.items) {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          stock: { increment: item.quantity },
+          soldCount: { decrement: item.quantity },
+        },
+      });
+    }
   });
 }
