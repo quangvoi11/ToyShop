@@ -10,19 +10,19 @@ datasource db {
 // ─── Auth & Users ──────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  phone     String?
-  avatar    String?
-  role      String   @default("CUSTOMER")
-  isActive       Boolean   @default(true)
-  resetToken     String?
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  avatar            String?
+  role              String    @default("CUSTOMER")
+  isActive          Boolean   @default(true)
+  resetToken        String?
   resetTokenExpires DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   cart         Cart?
   orders       Order[]
@@ -35,20 +35,20 @@ model User {
 }
 
 model Address {
-  id         String  @id @default(uuid())
-  userId     String
-  label      String?
-  street     String
-  ward       String
-  district   String
-  city       String
-  country    String  @default("Vietnam")
-  isDefault  Boolean @default(false)
-  phone      String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid())
+  userId    String
+  label     String?
+  street    String
+  ward      String
+  district  String
+  city      String
+  country   String   @default("Vietnam")
+  isDefault Boolean  @default(false)
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders Order[]
 
   @@index([userId])
@@ -57,16 +57,16 @@ model Address {
 // ─── Products & Categories ─────────────────────────────────────
 
 model Category {
-  id          String     @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
-  slug        String     @unique
+  slug        String   @unique
   description String?
   image       String?
   parentId    String?
-  isActive    Boolean    @default(true)
-  sortOrder   Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children Category[] @relation("CategoryHierarchy")
@@ -216,40 +216,40 @@ model WishlistItem {
 // ─── Orders ────────────────────────────────────────────────────
 
 model Order {
-  id             String   @id @default(uuid())
-  orderCode      String   @unique
-  userId         String
-  addressId      String?
-  status         String   @default("PENDING")
-  paymentMethod  String?
-  paymentStatus  String   @default("UNPAID")
-  subtotal       Decimal  @db.Decimal(18, 2)
-  shippingFee    Decimal  @default(0) @db.Decimal(18, 2)
-  discount       Decimal  @default(0) @db.Decimal(18, 2)
-  total          Decimal  @db.Decimal(18, 2)
-  note           String?
-  shippedAt      DateTime?
-  deliveredAt    DateTime?
-  cancelledAt    DateTime?
-  cancelReason   String?
+  id                String    @id @default(uuid())
+  orderCode         String    @unique
+  userId            String
+  addressId         String?
+  status            String    @default("PENDING")
+  paymentMethod     String?
+  paymentStatus     String    @default("UNPAID")
+  subtotal          Decimal   @db.Decimal(18, 2)
+  shippingFee       Decimal   @default(0) @db.Decimal(18, 2)
+  discount          Decimal   @default(0) @db.Decimal(18, 2)
+  total             Decimal   @db.Decimal(18, 2)
+  note              String?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  cancelledAt       DateTime?
+  cancelReason      String?
   vnp_TxnRef        String?
-  vnp_TransactionNo  String?
-  vnp_ResponseCode   String?
-  vnp_BankCode       String?
-  paymentUrl         String?
-  paidAt             DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  vnp_TransactionNo String?
+  vnp_ResponseCode  String?
+  vnp_BankCode      String?
+  paymentUrl        String?
+  paidAt            DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  user    User       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  address Address?   @relation(fields: [addressId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  items   OrderItem[]
+  user         User                 @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  address      Address?             @relation(fields: [addressId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items        OrderItem[]
+  transactions PaymentTransaction[]
 
   @@index([userId])
   @@index([orderCode])
   @@index([status])
   @@index([createdAt])
-
   @@map("Orders")
 }
 
@@ -271,6 +271,29 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+model PaymentTransaction {
+  id              String   @id @default(uuid())
+  orderId         String
+  gateway         String
+  type            String   @default("PAYMENT")
+  amount          Decimal  @db.Decimal(18, 2)
+  status          String   @default("PENDING")
+  requestPayload  String?  @db.NVarChar(max)
+  responsePayload String?  @db.NVarChar(max)
+  gatewayRef      String?
+  errorMessage    String?
+  ipAddress       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([gatewayRef])
+  @@index([status])
+  @@map("PaymentTransactions")
 }
 
 // ─── Promotion ─────────────────────────────────────────────────
