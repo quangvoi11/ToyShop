@@ -96,8 +96,129 @@ export async function deleteCategory(id: string) {
   return data;
 }
 
-export async function getAdminBrands() {
-  const { data } = await api.get('/admin/brands');
+export async function getAdminBrands(page = 1) {
+  const { data } = await api.get('/admin/brands', { params: { page, limit: 20 } });
+  return data;
+}
+
+export async function getAdminBrand(id: string) {
+  const { data } = await api.get(`/admin/brands/${id}`);
+  return data.data;
+}
+
+export async function createBrand(body: { name: string; slug?: string; logo?: string; isActive?: boolean }) {
+  const { data } = await api.post('/admin/brands', body);
+  return data.data;
+}
+
+export async function updateBrand(id: string, body: { name?: string; slug?: string; logo?: string; isActive?: boolean }) {
+  const { data } = await api.put(`/admin/brands/${id}`, body);
+  return data.data;
+}
+
+export async function deleteBrand(id: string) {
+  const { data } = await api.delete(`/admin/brands/${id}`);
+  return data;
+}
+
+// ===== Reviews (Admin) =====
+
+export async function getAdminReviews(params: { page?: number; rating?: number; isActive?: boolean; search?: string }) {
+  const { data } = await api.get('/admin/reviews', { params: { limit: 20, ...params } });
+  return data;
+}
+
+export async function toggleReviewActive(id: string) {
+  const { data } = await api.patch(`/admin/reviews/${id}/toggle`);
+  return data.data;
+}
+
+export async function deleteReview(id: string) {
+  const { data } = await api.delete(`/admin/reviews/${id}`);
+  return data;
+}
+
+// ===== Articles (Admin) =====
+
+export async function getAdminArticles(params: { page?: number; isPublished?: boolean; categoryId?: string; search?: string }) {
+  const { data } = await api.get('/admin/articles', { params: { limit: 20, ...params } });
+  return data;
+}
+
+export async function getAdminArticle(id: string) {
+  const { data } = await api.get(`/admin/articles/${id}`);
+  return data.data;
+}
+
+export async function createArticle(body: { title: string; slug?: string; content: string; excerpt?: string; thumbnail?: string; tags?: string; categoryId?: string; isPublished?: boolean; seoTitle?: string; seoDescription?: string }) {
+  const { data } = await api.post('/admin/articles', body);
+  return data.data;
+}
+
+export async function updateArticle(id: string, body: Partial<Parameters<typeof createArticle>[0]>) {
+  const { data } = await api.put(`/admin/articles/${id}`, body);
+  return data.data;
+}
+
+export async function deleteArticle(id: string) {
+  const { data } = await api.delete(`/admin/articles/${id}`);
+  return data;
+}
+
+export async function toggleArticlePublish(id: string) {
+  const { data } = await api.patch(`/admin/articles/${id}/publish`);
+  return data.data;
+}
+
+// ===== Inventory (Admin) =====
+
+export async function getAdminInventory(params: { page?: number; search?: string }) {
+  const { data } = await api.get('/admin/inventory', { params: { limit: 20, ...params } });
+  return data;
+}
+
+export async function adjustStock(body: { productId: string; variantId?: string; warehouseId: string; type: string; quantity: number; note?: string; reference?: string; batchId?: string }) {
+  const { data } = await api.post('/admin/inventory/adjust', body);
+  return data.data;
+}
+
+export async function getAdminMovements(params: { page?: number; productId?: string; warehouseId?: string; type?: string; dateFrom?: string; dateTo?: string }) {
+  const { data } = await api.get('/admin/inventory/movements', { params: { limit: 20, ...params } });
+  return data;
+}
+
+export async function getAdminWarehouses() {
+  const { data } = await api.get('/admin/warehouses');
+  return data.data;
+}
+
+export async function createWarehouse(body: { name: string; address?: string }) {
+  const { data } = await api.post('/admin/warehouses', body);
+  return data.data;
+}
+
+export async function updateWarehouse(id: string, body: { name?: string; address?: string }) {
+  const { data } = await api.put(`/admin/warehouses/${id}`, body);
+  return data.data;
+}
+
+export async function deleteWarehouse(id: string) {
+  const { data } = await api.delete(`/admin/warehouses/${id}`);
+  return data;
+}
+
+export async function getAdminBatches(params: { page?: number; productId?: string; warehouseId?: string }) {
+  const { data } = await api.get('/admin/batches', { params: { limit: 20, ...params } });
+  return data;
+}
+
+export async function createBatch(body: { productId: string; variantId?: string; warehouseId: string; batchCode: string; quantity: number; costPrice: number; expiryDate?: string }) {
+  const { data } = await api.post('/admin/batches', body);
+  return data.data;
+}
+
+export async function updateBatch(id: string, body: { batchCode?: string; costPrice?: number; expiryDate?: string }) {
+  const { data } = await api.put(`/admin/batches/${id}`, body);
   return data.data;
 }
 

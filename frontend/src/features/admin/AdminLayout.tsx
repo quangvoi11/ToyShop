@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Package, LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Tag, FolderTree,
-  ChevronLeft, ChevronRight, ChevronDown, Menu,
+  ChevronLeft, ChevronRight, ChevronDown, Menu, Star, Truck, Newspaper, Building2,
 } from 'lucide-react';
 import { RootState } from '../../store';
 import { logout, switchSession } from '../../store/slices/authSlice';
@@ -24,8 +24,12 @@ const menuItems: MenuItem[] = [
       { icon: Package, label: 'Quản lý sản phẩm', path: '/admin/products' },
       { icon: FolderTree, label: 'Quản lý danh mục', path: '/admin/categories' },
       { icon: Tag, label: 'Mã giảm giá', path: '/admin/coupons' },
+      { icon: Star, label: 'Đánh giá', path: '/admin/reviews' },
     ],
   },
+  { icon: Truck, label: 'Kho hàng', path: '/admin/inventory' },
+  { icon: Newspaper, label: 'Tin tức', path: '/admin/news' },
+  { icon: Building2, label: 'Thương hiệu', path: '/admin/brands' },
   { icon: ShoppingBag, label: 'Đơn hàng', path: '/admin/orders' },
   { icon: Users, label: 'Người dùng', path: '/admin/users' },
   { icon: Settings, label: 'Cài đặt', path: '/admin/settings' },
@@ -105,10 +109,12 @@ function MenuLeaf({
   item,
   location,
   isChild = false,
+  collapsed = false,
 }: {
   item: MenuItem;
   location: ReturnType<typeof useLocation>;
   isChild?: boolean;
+  collapsed?: boolean;
 }) {
   const active = item.path
     ? location.pathname === item.path || location.pathname.startsWith(item.path + '/')
@@ -119,11 +125,11 @@ function MenuLeaf({
       to={item.path!}
       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
         active ? 'bg-primary text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-      } ${isChild ? 'pl-9' : ''}`}
-      title={item.label}
+      } ${isChild ? 'pl-9' : ''} ${collapsed ? 'justify-center px-2' : ''}`}
+      title={collapsed ? item.label : undefined}
     >
       {item.icon && <item.icon className="h-5 w-5 flex-shrink-0" />}
-      <span>{item.label}</span>
+      {!collapsed && <span>{item.label}</span>}
     </Link>
   );
 }
@@ -202,7 +208,7 @@ export default function AdminLayout() {
         />
       );
     }
-    return <MenuLeaf key={item.path} item={item} location={location} />;
+    return <MenuLeaf key={item.path} item={item} location={location} collapsed={collapsed} />;
   };
 
   const sidebar = (

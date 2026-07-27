@@ -8,6 +8,11 @@ import AdminOrders from './features/admin/AdminOrders';
 import AdminUsers from './features/admin/AdminUsers';
 import AdminCoupons from './features/admin/AdminCoupons';
 import AdminCategories from './features/admin/AdminCategories';
+import AdminBrands from './features/admin/AdminBrands';
+import AdminReviews from './features/admin/AdminReviews';
+import AdminNews from './features/admin/AdminNews';
+import AdminInventory from './features/admin/AdminInventory';
+import AdminSettings from './features/admin/AdminSettings';
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import Home from './pages/Home';
 import Products from './pages/Products';
@@ -64,6 +69,11 @@ export default function App() {
           <Route path="/admin/orders" element={<AdminOrders />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/coupons" element={<AdminCoupons />} />
+          <Route path="/admin/brands" element={<AdminBrands />} />
+          <Route path="/admin/reviews" element={<AdminReviews />} />
+          <Route path="/admin/news" element={<AdminNews />} />
+          <Route path="/admin/inventory" element={<AdminInventory />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>
       </Route>
     </Routes>

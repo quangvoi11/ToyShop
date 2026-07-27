@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, ChevronDown, Phone } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { logout, fetchProfile, switchSession } from '../../store/slices/authSlice';
+import AnnouncementBar from '@/components/shared/AnnouncementBar';
 
 const categories = [
   { name: 'LEGO', slug: 'lego' },
@@ -38,15 +39,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
-      {/* Top bar */}
-      <div className="bg-primary text-primary-foreground text-xs">
-        <div className="container-main flex items-center justify-between py-1.5">
-          <span>🚚 Miễn phí giao hàng cho đơn trên 500.000₫</span>
-          <div className="flex items-center gap-4">
-            <span>Hỗ trợ: 096.146.2003</span>
-          </div>
-        </div>
-      </div>
+      <AnnouncementBar />
 
       {/* Main header */}
       <div className="container-main">
@@ -59,7 +52,7 @@ export default function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
             <img src="/images/logo-header.png" alt="Ele Store" className="h-20 w-auto" />
-            <span className="text-xl text-blue-600">Ele Store</span>
+            <span className="text-xl text-primary  text-blue-400">Ele Store</span>
           </Link>
 
           {/* Search bar */}
@@ -83,6 +76,14 @@ export default function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            <a
+              href="tel:0961462003"
+              className="hidden items-center gap-1 rounded-lg p-2 text-sm hover:bg-gray-100 lg:flex"
+            >
+              <Phone className="h-4 w-4" />
+              <span>096.146.2003</span>
+            </a>
+
             {accessToken ? (
               <div className="group relative">
                 <button className="flex items-center gap-1 rounded-lg p-2 hover:bg-gray-100">
@@ -91,14 +92,18 @@ export default function Header() {
                 </button>
                 <div className="invisible absolute right-0 top-full z-50 w-56 rounded-lg border bg-white py-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
                   <div className="border-b px-4 py-2">
-                    <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                    <p className="text-sm font-medium">
+                      {user?.firstName} {user?.lastName}
+                    </p>
                     <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
 
                   {hasMultipleSessions && (
                     <>
                       <div className="px-4 py-1.5">
-                        <p className="text-xs font-medium uppercase text-gray-400">Chuyển tài khoản</p>
+                        <p className="text-xs font-medium uppercase text-gray-400">
+                          Chuyển tài khoản
+                        </p>
                       </div>
                       {sessionRoles.map((role) => {
                         const session = sessions[role];
@@ -107,18 +112,22 @@ export default function Header() {
                           <button
                             key={role}
                             onClick={() => {
-                          if (!isActive) {
-                            dispatch(switchSession(role));
-                            navigate(role === 'admin' ? '/admin' : '/');
-                          }
-                        }}
+                              if (!isActive) {
+                                dispatch(switchSession(role));
+                                navigate(role === 'admin' ? '/admin' : '/');
+                              }
+                            }}
                             className={`flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 ${
                               isActive ? 'cursor-default bg-gray-50 text-gray-400' : ''
                             }`}
                           >
                             <span>{role === 'admin' ? '🔐' : '👤'}</span>
-                            <span>{session.user.firstName} ({role === 'admin' ? 'Admin' : 'Customer'})</span>
-                            {isActive && <span className="ml-auto text-xs text-gray-400">đang dùng</span>}
+                            <span>
+                              {session.user.firstName} ({role === 'admin' ? 'Admin' : 'Customer'})
+                            </span>
+                            {isActive && (
+                              <span className="ml-auto text-xs text-gray-400">đang dùng</span>
+                            )}
                           </button>
                         );
                       })}
@@ -127,7 +136,10 @@ export default function Header() {
                   )}
 
                   {user?.role === 'ADMIN' && !hasMultipleSessions && (
-                    <Link to="/admin" className="block px-4 py-2 text-sm font-medium text-blue-600 hover:bg-gray-50">
+                    <Link
+                      to="/admin"
+                      className="block px-4 py-2 text-sm font-medium text-blue-600 hover:bg-gray-50"
+                    >
                       Quản trị
                     </Link>
                   )}
@@ -190,9 +202,10 @@ export default function Header() {
               <li key={cat.slug} className="group relative">
                 <Link
                   to={`/products?category=${cat.slug}`}
-                  className="block px-4 py-3 text-sm font-medium hover:text-primary"
+                  className="flex items-center gap-1 px-4 py-3 text-sm font-medium hover:text-primary"
                 >
                   {cat.name}
+                  <ChevronDown className="h-3 w-3" />
                 </Link>
                 <div className="invisible absolute left-0 top-full z-50 w-56 rounded-lg border bg-white py-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
                   <Link
@@ -208,34 +221,43 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile menu overlay */}
       {mobileMenu && (
-        <div className="border-t lg:hidden">
-          <div className="container-main py-4">
-            <form onSubmit={handleSearch} className="mb-4 md:hidden">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 py-2 pl-3 pr-10 text-sm"
-                />
-                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2">
-                  <Search className="h-4 w-4" />
-                </button>
-              </div>
-            </form>
-            {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                to={`/products?category=${cat.slug}`}
-                className="block border-b py-3 text-sm"
-                onClick={() => setMobileMenu(false)}
-              >
-                {cat.name}
-              </Link>
-            ))}
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileMenu(false)} />
+          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl animate-slide-in">
+            <div className="flex items-center justify-between border-b p-4">
+              <span className="font-semibold">Menu</span>
+              <button onClick={() => setMobileMenu(false)}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 py-2 pl-3 pr-10 text-sm"
+                  />
+                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <Search className="h-4 w-4" />
+                  </button>
+                </div>
+              </form>
+              {categories.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  to={`/products?category=${cat.slug}`}
+                  className="block border-b py-3 text-sm"
+                  onClick={() => setMobileMenu(false)}
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}

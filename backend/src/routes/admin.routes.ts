@@ -24,6 +24,4 @@ router.post('/categories', validate(createCategorySchema), categoryCtrl.create);
 router.put('/categories/:id', validate(updateCategorySchema), categoryCtrl.update);
 router.delete('/categories/:id', categoryCtrl.remove);
 
-router.get('/brands', ctrl.getBrands);
-
 export default router;

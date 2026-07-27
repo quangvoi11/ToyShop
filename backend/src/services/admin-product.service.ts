@@ -145,7 +145,3 @@ export async function remove(id: string) {
     data: { isActive: false },
   });
 }
-
-export async function getBrands() {
-  return prisma.brand.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } });
-}

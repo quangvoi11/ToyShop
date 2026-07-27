@@ -27,9 +27,11 @@ model User {
   cart         Cart?
   orders       Order[]
   reviews      Review[]
+  articles     Article[]
   addresses    Address[]
   wishlist     WishlistItem[]
   refreshToken String?
+  stockMovements StockMovement[]
 
   @@map("Users")
 }
@@ -71,6 +73,7 @@ model Category {
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   children Category[] @relation("CategoryHierarchy")
   products Product[]
+  articles Article[]
 
   @@index([parentId])
 }
@@ -116,6 +119,8 @@ model Product {
   cartItems     CartItem[]
   orderItems    OrderItem[]
   wishlistItems WishlistItem[]
+  batches       Batch[]
+  stockMovements StockMovement[]
 
   @@index([categoryId])
   @@index([brandId])
@@ -135,6 +140,9 @@ model ProductVariant {
   updatedAt DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  batches       Batch[]
+  stockMovements StockMovement[]
 
   @@index([productId])
 }
@@ -170,6 +178,35 @@ model Review {
 
   @@unique([userId, productId])
   @@index([productId])
+}
+
+// ─── Articles ───────────────────────────────────────────────────
+
+model Article {
+  id             String    @id @default(uuid())
+  title          String
+  slug           String    @unique
+  content        String    @db.Text
+  excerpt        String?
+  thumbnail      String?
+  tags           String   @default("[]")
+  authorId       String
+  isPublished    Boolean   @default(false)
+  publishedAt    DateTime?
+  viewCount      Int       @default(0)
+  seoTitle       String?
+  seoDescription String?
+  categoryId     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  author   User      @relation(fields: [authorId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([isPublished])
+  @@index([slug])
 }
 
 // ─── Cart & Wishlist ───────────────────────────────────────────
@@ -316,4 +353,66 @@ model Coupon {
 
   @@index([code])
   @@index([isActive, startsAt, expiresAt])
+}
+
+// ─── Inventory ──────────────────────────────────────────────────
+
+model Warehouse {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  movements StockMovement[]
+  batches   Batch[]
+}
+
+model Batch {
+  id                String   @id @default(uuid())
+  productId         String
+  variantId         String?
+  warehouseId       String
+  batchCode         String
+  quantity          Int
+  remainingQuantity Int
+  costPrice         Decimal  @db.Decimal(10, 2)
+  expiryDate        DateTime?
+  createdAt         DateTime @default(now())
+
+  product   Product          @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  variant   ProductVariant?  @relation(fields: [variantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouse Warehouse        @relation(fields: [warehouseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  movements StockMovement[]
+
+  @@index([productId])
+  @@index([variantId])
+  @@index([warehouseId])
+  @@index([batchCode])
+}
+
+model StockMovement {
+  id          String   @id @default(uuid())
+  productId   String
+  variantId   String?
+  warehouseId String
+  batchId     String?
+  type        String   // IN, OUT, ADJUST, SALE, RETURN
+  quantity    Int      // positive for IN, negative for OUT
+  note        String?
+  reference   String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  product   Product          @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  variant   ProductVariant?  @relation(fields: [variantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  warehouse Warehouse        @relation(fields: [warehouseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  batch     Batch?           @relation(fields: [batchId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  creator   User             @relation(fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([productId])
+  @@index([variantId])
+  @@index([warehouseId])
+  @@index([type])
+  @@index([createdAt])
 }

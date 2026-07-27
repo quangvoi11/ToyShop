@@ -85,7 +85,7 @@ export default function AdminProducts() {
 
   const { data: brands } = useQuery({
     queryKey: ['admin-brands'],
-    queryFn: getAdminBrands,
+    queryFn: () => getAdminBrands(),
   });
 
   useEffect(() => {

@@ -37,8 +37,3 @@ export const remove = asyncHandler(async (req: Request, res: Response) => {
   await adminProductService.remove(req.params.id);
   res.json({ success: true, message: 'Product deactivated' });
 });
-
-export const getBrands = asyncHandler(async (_req: Request, res: Response) => {
-  const brands = await adminProductService.getBrands();
-  res.json({ success: true, data: brands });
-});

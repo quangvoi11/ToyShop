@@ -295,3 +295,74 @@ export interface WishlistItemSummary {
   primaryImage?: string;
   addedAt: string;
 }
+
+// ─── Brand (Admin) ─────────────────────────────────────────────
+
+export interface BrandSummary {
+  id: string;
+  name: string;
+  slug: string;
+  logo?: string;
+  isActive: boolean;
+  productsCount?: number;
+}
+
+// ─── Article ───────────────────────────────────────────────────
+
+export interface ArticleSummary {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  thumbnail?: string;
+  tags: string[];
+  authorName: string;
+  isPublished: boolean;
+  publishedAt?: string;
+  viewCount: number;
+  categoryName?: string;
+  createdAt: string;
+}
+
+// ─── Inventory ─────────────────────────────────────────────────
+
+export interface StockOverview {
+  id: string;
+  name: string;
+  sku: string;
+  stock: number;
+  batchCount: number;
+  lowStock: boolean;
+}
+
+export interface StockMovementSummary {
+  id: string;
+  productName: string;
+  variantName?: string;
+  warehouseName: string;
+  type: string;
+  quantity: number;
+  note?: string;
+  reference?: string;
+  creatorName: string;
+  createdAt: string;
+}
+
+export interface Warehouse {
+  id: string;
+  name: string;
+  address?: string;
+  isActive: boolean;
+}
+
+export interface BatchSummary {
+  id: string;
+  productName: string;
+  warehouseName: string;
+  batchCode: string;
+  quantity: number;
+  remainingQuantity: number;
+  costPrice: number;
+  expiryDate?: string;
+  createdAt: string;
+}
