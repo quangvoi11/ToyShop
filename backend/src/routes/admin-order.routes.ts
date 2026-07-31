@@ -7,7 +7,7 @@ import { updateOrderStatusSchema, updatePaymentStatusSchema } from '../validator
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN'));
+router.use(authorize('ADMIN', 'STAFF'));
 
 router.get('/orders', ctrl.getAll);
 router.get('/orders/:id', ctrl.getById);

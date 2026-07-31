@@ -6,8 +6,7 @@ import { getCategories } from '../api/categories';
 import HeroBanner from '@/components/home/HeroBanner';
 import CategoryGrid from '@/components/home/CategoryGrid';
 import BrandSlider from '@/components/home/BrandSlider';
-import ProductCard from '@/components/product/ProductCard';
-import type { ProductSummary } from '../../../shared/types';
+import ProductCard, { type FeaturedProduct } from '@/components/product/ProductCard';
 
 const features = [
   { icon: Truck, title: 'Miễn phí vận chuyển', desc: 'Đơn hàng trên 500.000₫' },
@@ -57,7 +56,7 @@ export default function Home() {
             <Link to="/products" className="text-sm font-medium text-primary hover:underline">Xem tất cả</Link>
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {products?.map((product: ProductSummary) => (
+            {products?.map((product: FeaturedProduct) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn --transpile-only src/server.ts",
-    "build": "tsc",
-    "start": "node -r tsconfig-paths/register dist/backend/src/server.js",
+    "build": "esbuild src/server.ts --bundle --platform=node --packages=external --format=cjs --outfile=dist/server.js",
+    "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc -p tsconfig.typecheck.json",
     "db:migrate": "prisma migrate dev",
@@ -49,6 +49,7 @@
     "@types/nodemailer": "^8.0.1",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
+    "esbuild": "^0.25.12",
     "eslint": "^8.57.0",
     "prisma": "^5.12.0",
     "ts-node": "^10.9.2",

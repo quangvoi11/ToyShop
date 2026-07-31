@@ -289,6 +289,11 @@ export async function updateUserRole(id: string, role: string) {
   return data.data;
 }
 
+export async function resetUserPassword(id: string, newPassword: string) {
+  const { data } = await api.post(`/admin/users/${id}/reset-password`, { newPassword });
+  return data.data;
+}
+
 // ===== Coupons =====
 
 export async function getAdminCoupons(page = 1) {

@@ -37,7 +37,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
 # --- Test ---
 coverage/
 .nyc_output/
@@ -72,4 +71,5 @@ shared/utils/*.d.ts.map
 frontend/vite.config.js
 frontend/vite.config.d.ts
 
-# --- Logs ---
+# --- Internal planning docs ---
+.opencode/plans/

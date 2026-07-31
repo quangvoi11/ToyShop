@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
 import { validateCoupon } from './coupon.service';
@@ -67,20 +68,14 @@ export async function create(data: {
   const order = await prisma.$transaction(async (tx) => {
     // Validate and decrement stock atomically
     for (const item of cart.items) {
-      const product = await tx.product.findUnique({
-        where: { id: item.product.id },
-        select: { stock: true, name: true },
-      });
-      if (!product || product.stock < item.quantity) {
-        throw new AppError(
-          `Sản phẩm "${item.product.name}" không đủ tồn kho (còn ${product?.stock || 0})`,
-          400,
-        );
-      }
-      await tx.product.update({
-        where: { id: item.product.id },
+      const result = await tx.product.updateMany({
+        where: { id: item.product.id, stock: { gte: item.quantity } },
         data: { stock: { decrement: item.quantity }, soldCount: { increment: item.quantity } },
       });
+      if (result.count === 0) {
+        const product = await tx.product.findUnique({ where: { id: item.product.id }, select: { stock: true, name: true } });
+        throw new AppError(`Sản phẩm "${item.product.name}" không đủ tồn kho (còn ${product?.stock || 0})`, 400);
+      }
     }
 
     const created = await tx.order.create({
@@ -94,16 +89,19 @@ export async function create(data: {
         total,
         paymentMethod: data.paymentMethod,
         note: data.note,
+        couponCode: data.couponCode ? data.couponCode.toUpperCase() : null,
         items: { create: orderItems },
       },
       include: { items: true },
     });
 
     if (data.couponCode) {
-      await tx.coupon.update({
-        where: { code: data.couponCode.toUpperCase() },
-        data: { usedCount: { increment: 1 } },
-      });
+      const code = data.couponCode.toUpperCase();
+      const coupon = await tx.coupon.findUnique({ where: { code } });
+      if (!coupon || !coupon.isActive || (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit)) {
+        throw new AppError('Mã giảm giá đã hết lượt dùng', 400);
+      }
+      await tx.coupon.update({ where: { code }, data: { usedCount: { increment: 1 } } });
     }
 
     await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
@@ -142,53 +140,39 @@ export async function getById(userId: string, orderId: string) {
 }
 
 export async function cancelOrder(userId: string, orderId: string, reason?: string) {
-  const order = await prisma.order.findFirst({
-    where: { id: orderId, userId },
-  });
+  const order = await prisma.order.findFirst({ where: { id: orderId, userId } });
   if (!order) throw new AppError('Order not found', 404);
 
   if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
     throw new AppError('Cannot cancel order in current status', 400);
   }
+  if (order.paymentStatus === 'PAID') {
+    throw new AppError('Cannot cancel a paid order. Please contact support', 400);
+  }
 
-  // Restore stock before cancelling
-  await restoreStockOnCancel(orderId);
-
-  return prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status: 'CANCELLED',
-      cancelledAt: new Date(),
-      cancelReason: reason || null,
-    },
-  });
+  await prisma.$transaction((tx) => cancelOrderTx(tx, orderId, reason));
+  return prisma.order.findUnique({ where: { id: orderId } });
 }
 
-export async function confirmPaymentStock(_orderId: string) {
-  // Stock is now decremented at order creation time.
-  // This function is kept for backward compatibility but is now a no-op.
-  return;
-}
-
-export async function restoreStockOnCancel(orderId: string) {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { items: true },
-  });
-
+export async function cancelOrderTx(tx: Prisma.TransactionClient, orderId: string, cancelReason?: string | null) {
+  const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: true } });
   if (!order) throw new AppError('Order not found', 404);
+  if (order.status === 'CANCELLED') return order;
 
-  if (order.status === 'CANCELLED') return;
+  for (const item of order.items) {
+    await tx.product.update({
+      where: { id: item.productId },
+      data: { stock: { increment: item.quantity }, soldCount: { decrement: item.quantity } },
+    });
+  }
 
-  await prisma.$transaction(async (tx) => {
-    for (const item of order.items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: {
-          stock: { increment: item.quantity },
-          soldCount: { decrement: item.quantity },
-        },
-      });
-    }
+  if (order.couponCode) {
+    await tx.coupon.update({ where: { code: order.couponCode }, data: { usedCount: { decrement: 1 } } });
+  }
+
+  await tx.order.update({
+    where: { id: orderId },
+    data: { status: 'CANCELLED', cancelledAt: new Date(), cancelReason: cancelReason ?? null },
   });
+  return order;
 }

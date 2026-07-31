@@ -7,7 +7,7 @@ import { createArticleSchema, updateArticleSchema } from '../validators/article.
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN'));
+router.use(authorize('ADMIN', 'STAFF'));
 
 router.get('/articles', ctrl.getAll);
 router.get('/articles/:id', ctrl.getById);

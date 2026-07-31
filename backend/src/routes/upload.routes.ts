@@ -15,7 +15,7 @@ const upload = multer({
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN'));
+router.use(authorize('ADMIN', 'STAFF'));
 router.post('/upload', upload.single('image'), uploadSingle);
 router.post('/upload/multiple', upload.array('images', 10), uploadMultiple);
 

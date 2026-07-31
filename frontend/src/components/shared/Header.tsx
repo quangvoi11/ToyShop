@@ -114,16 +114,16 @@ export default function Header() {
                             onClick={() => {
                               if (!isActive) {
                                 dispatch(switchSession(role));
-                                navigate(role === 'admin' ? '/admin' : '/');
+                                navigate(role === 'admin' || role === 'staff' ? '/admin' : '/');
                               }
                             }}
                             className={`flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 ${
                               isActive ? 'cursor-default bg-gray-50 text-gray-400' : ''
                             }`}
                           >
-                            <span>{role === 'admin' ? '🔐' : '👤'}</span>
+                            <span>{role === 'admin' || role === 'staff' ? '🔐' : '👤'}</span>
                             <span>
-                              {session.user.firstName} ({role === 'admin' ? 'Admin' : 'Customer'})
+                              {session.user.firstName} ({role === 'admin' ? 'Admin' : role === 'staff' ? 'Staff' : 'Customer'})
                             </span>
                             {isActive && (
                               <span className="ml-auto text-xs text-gray-400">đang dùng</span>
@@ -135,14 +135,14 @@ export default function Header() {
                     </>
                   )}
 
-                  {user?.role === 'ADMIN' && !hasMultipleSessions && (
+                  {user?.role === 'ADMIN' || user?.role === 'STAFF' ? (
                     <Link
                       to="/admin"
                       className="block px-4 py-2 text-sm font-medium text-blue-600 hover:bg-gray-50"
                     >
                       Quản trị
                     </Link>
-                  )}
+                  ) : null}
                   <Link to="/profile" className="block px-4 py-2 text-sm hover:bg-gray-50">
                     Tài khoản
                   </Link>

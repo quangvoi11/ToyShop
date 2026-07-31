@@ -9,7 +9,7 @@ import { createCategorySchema, updateCategorySchema } from '../validators/catego
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN'));
+router.use(authorize('ADMIN', 'STAFF'));
 
 router.get('/products', ctrl.getAll);
 router.get('/products/:id', ctrl.getById);

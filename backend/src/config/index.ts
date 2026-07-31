@@ -1,14 +1,22 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
+const nodeEnv = process.env.NODE_ENV || 'development';
+const jwtSecret = process.env.JWT_SECRET || '';
+
+if (jwtSecret.length < 32) {
+  throw new Error('JWT_SECRET must be a random string of at least 32 characters');
+}
 
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
   apiPrefix: process.env.API_PREFIX || '/api/v1',
+  trustProxy: parseInt(process.env.TRUST_PROXY || '0', 10),
   jwt: {
-    secret: process.env.JWT_SECRET || 'fallback-secret',
+    secret: jwtSecret,
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   },

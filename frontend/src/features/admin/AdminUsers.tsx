@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, User, Eye, Lock, Unlock, X } from 'lucide-react';
-import { getAdminUsers, updateUserStatus, updateUserRole } from '../../api/admin';
+import { Search, User, Eye, Lock, Unlock, KeyRound, X } from 'lucide-react';
+import { getAdminUsers, updateUserStatus, updateUserRole, resetUserPassword } from '../../api/admin';
 import { formatCurrency } from '../../lib/utils';
 import { ROLES_LABELS } from '../../../../shared/constants';
 import { toast } from 'sonner';
@@ -18,6 +18,10 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [selectedUser, setSelectedUser] = useState<AdminUserSummary | null>(null);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetNew, setResetNew] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetError, setResetError] = useState('');
   const queryClient = useQueryClient();
 
   const { data: result, isLoading } = useQuery({
@@ -46,6 +50,18 @@ export default function AdminUsers() {
     },
     onError: (err) => {
       toast.error((err as Error).message || 'Không thể cập nhật vai trò');
+    },
+  });
+
+  const resetPwMut = useMutation({
+    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) => resetUserPassword(id, newPassword),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('Đã đặt lại mật khẩu');
+      setSelectedUser(null);
+    },
+    onError: (err) => {
+      toast.error((err as Error).message || 'Không thể đặt lại mật khẩu');
     },
   });
 
@@ -137,7 +153,7 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      onClick={() => setSelectedUser(u)}
+                      onClick={() => { setSelectedUser(u); setResetOpen(false); setResetError(''); }}
                       className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600"
                       title="Xem chi tiết"
                     >
@@ -262,6 +278,58 @@ export default function AdminUsers() {
                       ))}
                     </select>
                   </div>
+                  <button
+                    onClick={() => { setResetOpen(!resetOpen); setResetError(''); }}
+                    disabled={resetPwMut.isPending}
+                    className="flex items-center gap-2 rounded-lg border border-purple-200 px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 disabled:opacity-50"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    Đặt lại mật khẩu
+                  </button>
+                  {resetOpen && (
+                    <div className="w-full rounded-lg border border-purple-200 bg-purple-50 p-4">
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (resetNew !== resetConfirm) {
+                            setResetError('Xác nhận mật khẩu không khớp');
+                            return;
+                          }
+                          resetPwMut.mutate({ id: selectedUser.id, newPassword: resetNew });
+                        }}
+                        className="space-y-3"
+                      >
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-gray-600">Mật khẩu mới</label>
+                          <input
+                            type="password"
+                            value={resetNew}
+                            onChange={(e) => setResetNew(e.target.value)}
+                            className="w-full rounded-lg border px-3 py-2 text-sm"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-gray-600">Xác nhận mật khẩu</label>
+                          <input
+                            type="password"
+                            value={resetConfirm}
+                            onChange={(e) => setResetConfirm(e.target.value)}
+                            className="w-full rounded-lg border px-3 py-2 text-sm"
+                            required
+                          />
+                        </div>
+                        {resetError && <p className="text-sm text-red-600">{resetError}</p>}
+                        <button
+                          type="submit"
+                          disabled={resetPwMut.isPending}
+                          className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
+                        >
+                          {resetPwMut.isPending ? 'Đang xử lý...' : 'Xác nhận đặt lại'}
+                        </button>
+                      </form>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

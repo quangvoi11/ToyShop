@@ -5,7 +5,7 @@ import * as ctrl from '../controllers/admin-review.controller';
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN'));
+router.use(authorize('ADMIN', 'STAFF'));
 
 router.get('/reviews', ctrl.getAll);
 router.get('/reviews/:id', ctrl.getById);

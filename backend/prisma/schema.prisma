@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -265,6 +265,7 @@ model Order {
   discount          Decimal   @default(0) @db.Decimal(18, 2)
   total             Decimal   @db.Decimal(18, 2)
   note              String?
+  couponCode        String?
   shippedAt         DateTime?
   deliveredAt       DateTime?
   cancelledAt       DateTime?
@@ -317,8 +318,8 @@ model PaymentTransaction {
   type            String   @default("PAYMENT")
   amount          Decimal  @db.Decimal(18, 2)
   status          String   @default("PENDING")
-  requestPayload  String?  @db.NVarChar(max)
-  responsePayload String?  @db.NVarChar(max)
+  requestPayload  String?  @db.Text
+  responsePayload String?  @db.Text
   gatewayRef      String?
   errorMessage    String?
   ipAddress       String?

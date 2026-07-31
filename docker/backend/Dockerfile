@@ -18,4 +18,4 @@ COPY shared/ ./shared/
 WORKDIR /app/backend
 RUN npx prisma generate && npm run build
 EXPOSE 5000
-CMD ["node", "dist/backend/src/server.js"]
+CMD ["node", "dist/server.js"]

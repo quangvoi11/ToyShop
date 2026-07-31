@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import * as ctrl from '../controllers/admin-user.controller';
-import { updateUserStatusSchema, updateUserRoleSchema } from '../validators/user.validator';
+import { updateUserStatusSchema, updateUserRoleSchema, resetUserPasswordSchema } from '../validators/user.validator';
 
 const router = Router();
 
@@ -13,5 +13,6 @@ router.get('/users', ctrl.getAll);
 router.get('/users/:id', ctrl.getById);
 router.patch('/users/:id/status', validate(updateUserStatusSchema), ctrl.updateStatus);
 router.patch('/users/:id/role', validate(updateUserRoleSchema), ctrl.updateRole);
+router.post('/users/:id/reset-password', validate(resetUserPasswordSchema), ctrl.resetPassword);
 
 export default router;

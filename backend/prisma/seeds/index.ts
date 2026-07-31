@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -9,24 +10,50 @@ function generateOrderCode(): string {
   return `TS${timestamp}${random}`;
 }
 
+function generatePassword(): string {
+  return crypto.randomBytes(12).toString('base64url');
+}
+
+async function upsertUser(opts: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  isActive?: boolean;
+  envPassword?: string;
+}) {
+  const { email, firstName, lastName, role, isActive = true, envPassword } = opts;
+  const existing = await prisma.user.findUnique({ where: { email } });
+  const password = envPassword || (existing ? undefined : generatePassword());
+  const hashed = password ? await bcrypt.hash(password, 10) : undefined;
+
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: hashed ? { password: hashed } : {},
+    create: {
+      email,
+      password: hashed || (await bcrypt.hash(generatePassword(), 10)),
+      firstName,
+      lastName,
+      role,
+      isActive,
+    },
+  });
+
+  if (password) {
+    console.log(`[SEED] ${email} — password: ${password}`);
+  } else {
+    console.log(`[SEED] ${email} — already exists, password unchanged (set SEED_*_PASSWORD to rotate)`);
+  }
+
+  return user;
+}
+
 async function main() {
   console.log('Seeding database...');
 
   // ─── Admin User ──────────────────────────────────────────────
-  const adminPassword = await bcrypt.hash('Admin@123', 10);
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@toyshop.com' },
-    update: { password: adminPassword },
-    create: {
-      email: 'admin@toyshop.com',
-      password: adminPassword,
-      firstName: 'Admin',
-      lastName: 'Admin',
-      role: 'ADMIN',
-      isActive: true,
-    },
-  });
-  console.log(`Created admin: ${admin.email}`);
+  await upsertUser({ email: 'admin@toyshop.com', firstName: 'Admin', lastName: 'Admin', role: 'ADMIN', envPassword: process.env.SEED_ADMIN_PASSWORD });
 
   // ─── Categories ──────────────────────────────────────────────
   const parentCategories: Record<string, string> = {};
@@ -104,26 +131,27 @@ async function main() {
   console.log(`Created ${newBrands.length} brands`);
 
   // ─── Demo Users ──────────────────────────────────────────────
-  const customerPassword = await bcrypt.hash('customer123', 10);
-
   const demoUsers = [
-    { email: 'customer1@toyshop.vn', password: customerPassword, firstName: 'Nguyễn', lastName: 'Văn An', role: 'CUSTOMER', isActive: true },
-    { email: 'customer2@toyshop.vn', password: customerPassword, firstName: 'Trần', lastName: 'Thị Bình', role: 'CUSTOMER', isActive: true },
-    { email: 'vip@toyshop.vn', password: await bcrypt.hash('vip123', 10), firstName: 'Lê', lastName: 'Văn Cường', role: 'CUSTOMER', isActive: true },
-    { email: 'staff@toyshop.vn', password: await bcrypt.hash('staff123', 10), firstName: 'Phạm', lastName: 'Thị Dung', role: 'STAFF', isActive: true },
-    { email: 'banned@toyshop.vn', password: customerPassword, firstName: 'Hoàng', lastName: 'Văn E', role: 'CUSTOMER', isActive: false },
+    { email: 'customer1@toyshop.vn', firstName: 'Nguyễn', lastName: 'Văn An', role: 'CUSTOMER' },
+    { email: 'customer2@toyshop.vn', firstName: 'Trần', lastName: 'Thị Bình', role: 'CUSTOMER' },
+    { email: 'vip@toyshop.vn', firstName: 'Lê', lastName: 'Văn Cường', role: 'CUSTOMER' },
+    { email: 'staff@toyshop.vn', firstName: 'Phạm', lastName: 'Thị Dung', role: 'STAFF' },
+    { email: 'banned@toyshop.vn', firstName: 'Hoàng', lastName: 'Văn E', role: 'CUSTOMER', isActive: false },
   ];
 
   const userIds: Record<string, string> = {};
   for (const u of demoUsers) {
-    const created = await prisma.user.upsert({
-      where: { email: u.email },
-      update: {},
-      create: u,
+    const created = await upsertUser({
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      role: u.role,
+      isActive: u.isActive,
+      envPassword: process.env.SEED_DEMO_PASSWORD,
     });
     userIds[u.email] = created.id;
   }
-  console.log(`Created ${demoUsers.length} demo users`);
+  console.log(`Seeded ${demoUsers.length} demo users`);
 
   // ─── Addresses ───────────────────────────────────────────────
   const customer1Id = userIds['customer1@toyshop.vn'];

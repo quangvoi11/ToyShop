@@ -68,14 +68,6 @@ export function verifyReturnUrl(query: Record<string, string>): {
   const hmac = crypto.createHmac('sha512', config.vnpay.hashSecret);
   const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
-  console.log('[VNPay Verify]', {
-    received: secureHash?.substring(0, 16) + '...',
-    computed: signed.substring(0, 16) + '...',
-    match: secureHash === signed,
-    paramsCount: Object.keys(sorted).length,
-    signDataPreview: signData.substring(0, 200),
-  });
-
   return {
     isValid: secureHash === signed,
     responseCode: query['vnp_ResponseCode'] || '',
@@ -100,6 +92,10 @@ export async function processReturn(query: Record<string, string>) {
 
   if (!order) {
     throw new AppError('Order not found', 404);
+  }
+
+  if (Math.abs(result.amount - Number(order.total)) > 1) {
+    throw new AppError('Payment amount mismatch', 400);
   }
 
   // Idempotency: already processed via IPN or previous return

@@ -28,3 +28,9 @@ export const updateRole = asyncHandler(async (req: Request, res: Response) => {
   const user = await adminUserService.updateRole(req.params.id, role);
   res.json({ success: true, data: user });
 });
+
+export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { newPassword } = req.body;
+  const result = await adminUserService.resetPassword(req.params.id, newPassword);
+  res.json({ success: true, data: result });
+});

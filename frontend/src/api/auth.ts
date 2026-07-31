@@ -30,3 +30,8 @@ export async function resetPassword(token: string, password: string) {
   const { data } = await api.post('/auth/reset-password', { token, password });
   return data.data;
 }
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const { data } = await api.post('/auth/change-password', { currentPassword, newPassword });
+  return data.data;
+}

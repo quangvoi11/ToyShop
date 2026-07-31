@@ -15,7 +15,7 @@ export default function Login() {
     e.preventDefault();
     try {
       const result = await dispatch(loginThunk(form)).unwrap();
-      if (result.user.role === 'ADMIN') {
+      if (result.user.role === 'ADMIN' || result.user.role === 'STAFF') {
         navigate('/admin');
       } else {
         navigate('/');

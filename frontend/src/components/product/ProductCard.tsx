@@ -1,19 +1,31 @@
 import { Link } from 'react-router-dom';
 import { Heart, Star, ShoppingCart } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import type { ProductSummary } from '../../../../shared/types';
+
+export interface FeaturedProduct {
+  id: string;
+  name: string;
+  slug: string;
+  basePrice: number | string;
+  salePrice?: number | string | null;
+  stock: number;
+  isFeatured: boolean;
+  soldCount?: number;
+  images?: { url: string }[];
+  category?: { name: string } | null;
+}
 
 interface ProductCardProps {
-  product: ProductSummary;
+  product: FeaturedProduct;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const discountPercent = product.salePrice
-    ? Math.round(((product.basePrice - product.salePrice) / product.basePrice) * 100)
-    : 0;
+  const price = Number(product.basePrice);
+  const salePrice = product.salePrice != null ? Number(product.salePrice) : null;
+  const discountPercent = salePrice != null ? Math.round(((price - salePrice) / price) * 100) : 0;
 
   return (
-    <div className="group relative rounded-xl border bg-white p-3 transition-all hover:shadow-lg">
+    <div className="group relative flex h-full flex-col rounded-xl border bg-white p-3 transition-all hover:shadow-lg">
       {discountPercent > 0 && (
         <span className="absolute left-3 top-3 z-10 rounded bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
           -{discountPercent}%
@@ -27,9 +39,9 @@ export default function ProductCard({ product }: ProductCardProps) {
       </button>
       <Link to={`/products/${product.slug}`}>
         <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-gray-100">
-          {product.primaryImage ? (
+          {product.images?.[0]?.url ? (
             <img
-              src={product.primaryImage}
+              src={product.images[0].url}
               alt={product.name}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
@@ -40,9 +52,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
       </Link>
-      <p className="mb-1 text-xs text-gray-500">{product.categoryName}</p>
-      <Link to={`/products/${product.slug}`}>
-        <h3 className="mb-2 line-clamp-2 text-sm font-medium transition-colors group-hover:text-primary">
+      <p className="mb-1 text-xs text-gray-500">{product.category?.name}</p>
+      <Link to={`/products/${product.slug}`} className="mb-2 flex-1">
+        <h3 className="line-clamp-2 text-sm font-medium transition-colors group-hover:text-primary">
           {product.name}
         </h3>
       </Link>
@@ -53,15 +65,15 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
       <div className="mb-3 flex items-baseline gap-2">
         <span className="text-lg font-bold text-primary">
-          {formatCurrency(product.salePrice || product.basePrice)}
+          {formatCurrency(salePrice ?? price)}
         </span>
-        {product.salePrice && (
+        {salePrice != null && (
           <span className="text-xs text-gray-400 line-through">
-            {formatCurrency(product.basePrice)}
+            {formatCurrency(price)}
           </span>
         )}
       </div>
-      <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90">
+      <button className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90">
         <ShoppingCart className="h-4 w-4" />
         Thêm vào giỏ
       </button>

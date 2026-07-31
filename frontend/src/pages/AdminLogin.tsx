@@ -9,13 +9,13 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const { loading, error } = useAppSelector((s) => s.auth);
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ email: 'admin@toyshop.com', password: 'Admin@123' });
+  const [form, setForm] = useState({ email: 'admin@toyshop.com', password: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const result = await dispatch(loginThunk(form)).unwrap();
-      if (result.user.role === 'ADMIN') {
+      if (result.user.role === 'ADMIN' || result.user.role === 'STAFF') {
         navigate('/admin');
       } else {
         navigate('/');

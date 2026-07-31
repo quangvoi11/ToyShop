@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Package, LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Tag, FolderTree,
@@ -12,27 +12,29 @@ interface MenuItem {
   icon?: typeof Package;
   label: string;
   path?: string;
+  roles?: string[];
   children?: MenuItem[];
 }
 
 const menuItems: MenuItem[] = [
-  { icon: LayoutDashboard, label: 'Tổng quan', path: '/admin' },
+  { icon: LayoutDashboard, label: 'Tổng quan', path: '/admin', roles: ['ADMIN'] },
   {
     icon: Package,
     label: 'Sản phẩm',
+    roles: ['ADMIN', 'STAFF'],
     children: [
       { icon: Package, label: 'Quản lý sản phẩm', path: '/admin/products' },
       { icon: FolderTree, label: 'Quản lý danh mục', path: '/admin/categories' },
-      { icon: Tag, label: 'Mã giảm giá', path: '/admin/coupons' },
+      { icon: Tag, label: 'Mã giảm giá', path: '/admin/coupons', roles: ['ADMIN'] },
       { icon: Star, label: 'Đánh giá', path: '/admin/reviews' },
     ],
   },
-  { icon: Truck, label: 'Kho hàng', path: '/admin/inventory' },
-  { icon: Newspaper, label: 'Tin tức', path: '/admin/news' },
-  { icon: Building2, label: 'Thương hiệu', path: '/admin/brands' },
-  { icon: ShoppingBag, label: 'Đơn hàng', path: '/admin/orders' },
-  { icon: Users, label: 'Người dùng', path: '/admin/users' },
-  { icon: Settings, label: 'Cài đặt', path: '/admin/settings' },
+  { icon: Truck, label: 'Kho hàng', path: '/admin/inventory', roles: ['ADMIN', 'STAFF'] },
+  { icon: Newspaper, label: 'Tin tức', path: '/admin/news', roles: ['ADMIN', 'STAFF'] },
+  { icon: Building2, label: 'Thương hiệu', path: '/admin/brands', roles: ['ADMIN'] },
+  { icon: ShoppingBag, label: 'Đơn hàng', path: '/admin/orders', roles: ['ADMIN', 'STAFF'] },
+  { icon: Users, label: 'Người dùng', path: '/admin/users', roles: ['ADMIN'] },
+  { icon: Settings, label: 'Cài đặt', path: '/admin/settings', roles: ['ADMIN', 'STAFF'] },
 ];
 
 function MenuGroup({
@@ -159,7 +161,7 @@ export default function AdminLayout() {
     setOpenGroups(initial);
   }, [location.pathname]);
 
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) {
     const currentSession = activeRole ? sessions[activeRole] : null;
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -191,6 +193,25 @@ export default function AdminLayout() {
       </div>
     );
   }
+
+  const adminOnlyPaths = menuItems.flatMap((item) => {
+    const leaves = item.children ?? [item];
+    return leaves.filter((c) => c.roles && !c.roles.includes('STAFF')).map((c) => c.path!);
+  });
+  if (user.role === 'STAFF' && adminOnlyPaths.some((p) => location.pathname === p || location.pathname.startsWith(p + '/'))) {
+    return <Navigate to="/admin/products" replace />;
+  }
+
+  const visibleMenuItems = menuItems
+    .map((item) => ({
+      ...item,
+      children: item.children?.filter((c) => !c.roles || c.roles.includes(user.role)),
+    }))
+    .filter(
+      (item) =>
+        (!item.roles && (!item.children || item.children.length > 0)) ||
+        (item.roles && item.roles.includes(user.role)),
+    );
 
   const toggleGroup = (label: string) =>
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -226,7 +247,7 @@ export default function AdminLayout() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {menuItems.map((item) => renderItem(item))}
+        {visibleMenuItems.map((item) => renderItem(item))}
       </nav>
 
       {/* User & Logout */}

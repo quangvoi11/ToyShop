@@ -1,6 +1,7 @@
 import { prisma } from '../utils/prisma';
 import { AppError } from '../middleware/errorHandler';
 import { Prisma } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 export async function getAll(params: {
   page?: number;
@@ -106,4 +107,17 @@ export async function updateRole(id: string, role: string) {
     data: { role },
     select: { id: true, email: true, firstName: true, lastName: true, role: true },
   });
+}
+
+export async function resetPassword(id: string, newPassword: string) {
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) throw new AppError('User not found', 404);
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({
+    where: { id },
+    data: { password: hashedPassword, resetToken: null, resetTokenExpires: null, refreshToken: null },
+  });
+
+  return { message: 'Password reset successfully' };
 }

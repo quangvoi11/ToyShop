@@ -8,7 +8,7 @@ import { createWarehouseSchema, updateWarehouseSchema } from '../validators/ware
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN'));
+router.use(authorize('ADMIN', 'STAFF'));
 
 router.get('/inventory', ctrl.getStockOverview);
 router.post('/inventory/adjust', validate(adjustStockSchema), ctrl.adjustStock);

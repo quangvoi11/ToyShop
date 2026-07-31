@@ -21,6 +21,11 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
   res.json({ success: true, data: result });
 });
 
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  const result = await authService.logout(req.user!.userId);
+  res.json({ success: true, data: result });
+});
+
 export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.forgotPassword(req.body.email);
   res.json({ success: true, data: result });
@@ -29,6 +34,12 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
 export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
   const { token, password } = req.body;
   const result = await authService.resetPassword(token, password);
+  res.json({ success: true, data: result });
+});
+
+export const changePassword = asyncHandler(async (req: Request, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+  const result = await authService.changePassword(req.user!.userId, currentPassword, newPassword);
   res.json({ success: true, data: result });
 });
 
