@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import * as authApi from '../../api/auth';
+import type { RootState } from '../../store';
 
 interface User {
   id: string;
@@ -89,6 +90,23 @@ export const fetchProfile = createAsyncThunk('auth/fetchProfile', async () => {
   return authApi.getProfile();
 });
 
+export const logoutThunk = createAsyncThunk(
+  'auth/logoutAsync',
+  async (_arg: void, { dispatch, getState }) => {
+    const state = getState() as RootState;
+    const role = state.auth.activeRole;
+    const session = role ? state.auth.sessions[role] : null;
+    if (session) {
+      try {
+        await authApi.logout(session.refreshToken);
+      } catch {
+        // local logout still proceeds
+      }
+    }
+    dispatch(logout());
+  },
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -127,6 +145,16 @@ const authSlice = createSlice({
 
       localStorage.setItem('active_role', role);
       syncFlatKeys(state.sessions[role]);
+    },
+    tokenRefreshed(state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) {
+      state.accessToken = action.payload.accessToken;
+      if (state.activeRole && state.sessions[state.activeRole]) {
+        const session = state.sessions[state.activeRole];
+        session.accessToken = action.payload.accessToken;
+        session.refreshToken = action.payload.refreshToken;
+        localStorage.setItem('auth_sessions', JSON.stringify(state.sessions));
+        syncFlatKeys(session);
+      }
     },
     removeSession(state, action: PayloadAction<string>) {
       const role = action.payload;
@@ -200,5 +228,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError, switchSession, removeSession } = authSlice.actions;
+export const { logout, clearError, switchSession, removeSession, tokenRefreshed } = authSlice.actions;
 export default authSlice.reducer;

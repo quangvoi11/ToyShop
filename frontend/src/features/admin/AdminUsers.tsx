@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, User, Eye, Lock, Unlock, KeyRound, X } from 'lucide-react';
-import { getAdminUsers, updateUserStatus, updateUserRole, resetUserPassword } from '../../api/admin';
+import { getAdminUsers, getAdminUser, updateUserStatus, updateUserRole, resetUserPassword } from '../../api/admin';
 import { formatCurrency } from '../../lib/utils';
 import { ROLES_LABELS } from '../../../../shared/constants';
 import { toast } from 'sonner';
@@ -17,7 +17,7 @@ export default function AdminUsers() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [selectedUser, setSelectedUser] = useState<AdminUserSummary | null>(null);
+  const [selectedUser, setSelectedUser] = useState<(AdminUserSummary & { _count?: { orders?: number }; totalSpent?: number }) | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetNew, setResetNew] = useState('');
   const [resetConfirm, setResetConfirm] = useState('');
@@ -153,7 +153,20 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
-                      onClick={() => { setSelectedUser(u); setResetOpen(false); setResetError(''); }}
+                      onClick={() => {
+                        setSelectedUser(u);
+                        getAdminUser(u.id)
+                          .then((detail) =>
+                            setSelectedUser((prev) =>
+                              prev && prev.id === u.id
+                                ? { ...prev, ...detail, orderCount: detail._count?.orders ?? 0, totalSpent: detail.totalSpent ?? 0 }
+                                : prev,
+                            ),
+                          )
+                          .catch(() => { /* giữ dữ liệu từ list */ });
+                        setResetOpen(false);
+                        setResetError('');
+                      }}
                       className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-blue-600"
                       title="Xem chi tiết"
                     >
@@ -234,11 +247,11 @@ export default function AdminUsers() {
 
               <div className="grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 text-sm">
                 <div className="text-center">
-                  <p className="text-2xl font-bold">{selectedUser.orderCount}</p>
+                  <p className="text-2xl font-bold">{selectedUser.orderCount ?? selectedUser._count?.orders ?? 0}</p>
                   <p className="text-gray-500">Đơn hàng</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold">{formatCurrency(selectedUser.totalSpent)}</p>
+                  <p className="text-2xl font-bold">{formatCurrency(selectedUser.totalSpent ?? 0)}</p>
                   <p className="text-gray-500">Tổng chi tiêu</p>
                 </div>
               </div>

@@ -39,6 +39,10 @@ export default function AdminBrands() {
           logo: brand.logo || '',
           isActive: brand.isActive,
         });
+      }).catch(() => {
+        toast.error('Không thể tải thương hiệu');
+        setShowModal(false);
+        setEditingId(null);
       });
     }
     if (showModal && !editingId) {

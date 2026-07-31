@@ -95,17 +95,23 @@ export default function AdminCategories() {
 
   useEffect(() => {
     if (showModal && editingId) {
-      getAdminCategory(editingId).then((c: CategoryNode) => {
-        setForm({
-          name: c.name,
-          slug: c.slug,
-          description: c.description || '',
-          image: c.image || '',
-          parentId: c.parentId || '',
-          sortOrder: c.sortOrder,
-          isActive: c.isActive,
+      getAdminCategory(editingId)
+        .then((c: CategoryNode) => {
+          setForm({
+            name: c.name,
+            slug: c.slug,
+            description: c.description || '',
+            image: c.image || '',
+            parentId: c.parentId || '',
+            sortOrder: c.sortOrder,
+            isActive: c.isActive,
+          });
+        })
+        .catch(() => {
+          toast.error('Không thể tải danh mục');
+          setShowModal(false);
+          setEditingId(null);
         });
-      });
     }
     if (showModal && !editingId) {
       setForm(emptyForm);

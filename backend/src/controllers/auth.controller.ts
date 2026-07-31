@@ -22,7 +22,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  const result = await authService.logout(req.user!.userId);
+  const result = await authService.logout(req.user!.userId, req.body?.refreshToken);
   res.json({ success: true, data: result });
 });
 

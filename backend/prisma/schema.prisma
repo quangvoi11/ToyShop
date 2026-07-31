@@ -30,7 +30,7 @@ model User {
   articles     Article[]
   addresses    Address[]
   wishlist     WishlistItem[]
-  refreshToken String?
+  refreshTokens RefreshToken[]
   stockMovements StockMovement[]
 
   @@map("Users")
@@ -416,4 +416,17 @@ model StockMovement {
   @@index([warehouseId])
   @@index([type])
   @@index([createdAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("RefreshTokens")
 }

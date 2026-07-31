@@ -66,6 +66,10 @@ export default function AdminNews() {
           seoDescription: a.seoDescription || '',
           isPublished: a.isPublished,
         });
+      }).catch(() => {
+        toast.error('Không thể tải bài viết');
+        setShowModal(false);
+        setEditingId(null);
       });
     }
     if (showModal && !editingId) {

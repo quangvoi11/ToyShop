@@ -1,4 +1,4 @@
-# ToyShop 🧸
+# ToyShop ![alt text](image.png)
 
 **Production-ready Full Stack E-commerce Platform**
 
@@ -6,15 +6,15 @@ A modern, scalable e-commerce website for toys, built with React, Node.js, Expre
 
 ## Tech Stack
 
-| Layer       | Technology                                        |
-| ----------- | ------------------------------------------------- |
-| Frontend    | React, Vite, TypeScript, Tailwind CSS, shadcn/ui  |
-| State       | Redux Toolkit, TanStack Query                     |
-| Backend     | Node.js, Express.js, TypeScript, Prisma ORM       |
-| Database    | Microsoft SQL Server 2022                         |
-| Storage     | Cloudinary                                        |
-| Containers  | Docker, Docker Compose                            |
-| CI/CD       | GitHub Actions                                    |
+| Layer      | Technology                                       |
+| ---------- | ------------------------------------------------ |
+| Frontend   | React, Vite, TypeScript, Tailwind CSS, shadcn/ui |
+| State      | Redux Toolkit, TanStack Query                    |
+| Backend    | Node.js, Express.js, TypeScript, Prisma ORM      |
+| Database   | Microsoft SQL Server 2022                        |
+| Storage    | Cloudinary                                       |
+| Containers | Docker, Docker Compose                           |
+| CI/CD      | GitHub Actions                                   |
 
 ## Architecture
 

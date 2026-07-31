@@ -25,7 +25,11 @@ export default function AdminSettings() {
       toast.success('Đổi mật khẩu thành công');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       if (user?.email) {
-        dispatch(loginThunk({ email: user.email, password: passwordForm.newPassword }));
+        try {
+          await dispatch(loginThunk({ email: user.email, password: passwordForm.newPassword })).unwrap();
+        } catch {
+          toast.error('Đổi mật khẩu thành công nhưng đăng nhập lại thất bại. Vui lòng đăng nhập lại.');
+        }
       }
     } catch (err) {
       setPasswordError((err as Error).message || 'Không thể đổi mật khẩu');

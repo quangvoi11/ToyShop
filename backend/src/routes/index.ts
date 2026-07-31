@@ -35,14 +35,14 @@ router.use(reviewRoutes);
 router.use(couponRoutes);
 router.use(paymentRoutes);
 router.use('/admin', adminRoutes);
-router.use('/admin', adminBrandRoutes);
 router.use('/admin', adminOrderRoutes);
-router.use('/admin', adminUserRoutes);
-router.use('/admin', adminDashboardRoutes);
-router.use('/admin', adminCouponRoutes);
 router.use('/admin', adminReviewRoutes);
 router.use('/admin', adminArticleRoutes);
 router.use('/admin', adminInventoryRoutes);
+router.use('/admin', adminBrandRoutes);
+router.use('/admin', adminUserRoutes);
+router.use('/admin', adminDashboardRoutes);
+router.use('/admin', adminCouponRoutes);
 router.use(uploadRoutes);
 
 export default router;

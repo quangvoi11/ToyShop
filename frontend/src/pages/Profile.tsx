@@ -1,14 +1,13 @@
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { User, Package, Heart, MapPin, LogOut } from 'lucide-react';
-import { RootState } from '../store';
-import { useDispatch } from 'react-redux';
-import { logout } from '../store/slices/authSlice';
+import { RootState, useAppDispatch } from '../store';
+import { logoutThunk } from '../store/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
   const { user } = useSelector((s: RootState) => s.auth);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   if (!user) {
@@ -50,7 +49,7 @@ export default function Profile() {
               </Link>
             ))}
             <button
-              onClick={() => { dispatch(logout()); navigate('/'); }}
+              onClick={() => { dispatch(logoutThunk()); navigate('/'); }}
               className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-red-600 hover:bg-red-50"
             >
               <LogOut className="h-5 w-5" />

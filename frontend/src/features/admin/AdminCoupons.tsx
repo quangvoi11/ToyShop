@@ -76,7 +76,11 @@ export default function AdminCoupons() {
           expiresAt: formatDatetimeLocal(coupon.expiresAt),
           isActive: coupon.isActive,
         })
-      );
+      ).catch(() => {
+        toast.error('Không thể tải mã giảm giá');
+        setShowModal(false);
+        setEditingId(null);
+      });
     }
     if (showModal && !editingId) {
       setForm(emptyForm);

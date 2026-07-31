@@ -274,7 +274,7 @@ export async function getAdminUsers(page = 1, search?: string, role?: string) {
   return data;
 }
 
-export async function getAdminUser(id: string): Promise<AdminUserSummary> {
+export async function getAdminUser(id: string): Promise<AdminUserSummary & { _count?: { orders?: number } }> {
   const { data } = await api.get(`/admin/users/${id}`);
   return data.data;
 }

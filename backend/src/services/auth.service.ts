@@ -76,31 +76,39 @@ export async function getProfile(userId: string) {
 }
 
 export async function refreshTokens(refreshToken: string) {
-  const userId = refreshToken.split('.')[0];
-  if (!userId) throw new AppError('Invalid or expired refresh token', 401);
+  const token = await prisma.refreshToken.findUnique({
+    where: { tokenHash: hashToken(refreshToken) },
+    include: { user: true },
+  });
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || !user.isActive) throw new AppError('Invalid or expired refresh token', 401);
-
-  const hash = hashToken(refreshToken);
-  if (user.refreshToken !== hash) {
-    if (user.refreshToken) {
-      await prisma.user.update({ where: { id: userId }, data: { refreshToken: null } });
-    }
+  if (!token || token.expiresAt <= new Date() || !token.user.isActive) {
+    if (token) await revokeRefreshToken(refreshToken);
     throw new AppError('Session expired, please log in again', 401);
   }
 
-  const newRefreshToken = await issueRefreshToken(user.id);
-  const accessToken = generateAccessToken({ userId: user.id, role: user.role });
+  const newRefreshToken = await issueRefreshToken(token.userId);
+  await revokeRefreshToken(refreshToken);
+
+  const accessToken = generateAccessToken({ userId: token.userId, role: token.user.role });
   return {
-    user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role },
+    user: {
+      id: token.user.id,
+      email: token.user.email,
+      firstName: token.user.firstName,
+      lastName: token.user.lastName,
+      role: token.user.role,
+    },
     accessToken,
     refreshToken: newRefreshToken,
   };
 }
 
-export async function logout(userId: string) {
-  await prisma.user.update({ where: { id: userId }, data: { refreshToken: null } });
+export async function logout(userId: string, refreshToken?: string) {
+  if (refreshToken) {
+    await prisma.refreshToken.deleteMany({ where: { tokenHash: hashToken(refreshToken) } });
+  } else {
+    await prisma.refreshToken.deleteMany({ where: { userId } });
+  }
   return { message: 'Logged out successfully' };
 }
 
@@ -157,10 +165,25 @@ export async function changePassword(userId: string, currentPassword: string, ne
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   await prisma.user.update({
     where: { id: userId },
-    data: { password: hashedPassword, resetToken: null, resetTokenExpires: null, refreshToken: null },
+    data: { password: hashedPassword, resetToken: null, resetTokenExpires: null },
   });
+  await prisma.refreshToken.deleteMany({ where: { userId } });
 
   return { message: 'Password changed successfully' };
+}
+
+function parseDurationMs(value: string): number {
+  const match = value.match(/^(\d+)\s*(s|m|h|d)?$/i);
+  if (!match) return 30 * 24 * 60 * 60 * 1000;
+  const n = Number(match[1]);
+  const unit = (match[2] || 'm').toLowerCase();
+  const multipliers: Record<string, number> = {
+    s: 1000,
+    m: 60_000,
+    h: 3_600_000,
+    d: 86_400_000,
+  };
+  return n * multipliers[unit];
 }
 
 function hashToken(token: string): string {
@@ -173,6 +196,13 @@ function generateAccessToken(payload: JwtPayload): string {
 
 async function issueRefreshToken(userId: string): Promise<string> {
   const raw = `${userId}.${crypto.randomBytes(48).toString('base64url')}`;
-  await prisma.user.update({ where: { id: userId }, data: { refreshToken: hashToken(raw) } });
+  const expiresAt = new Date(Date.now() + parseDurationMs(config.jwt.refreshExpiresIn));
+  await prisma.refreshToken.create({
+    data: { userId, tokenHash: hashToken(raw), expiresAt },
+  });
   return raw;
+}
+
+async function revokeRefreshToken(refreshToken: string): Promise<void> {
+  await prisma.refreshToken.deleteMany({ where: { tokenHash: hashToken(refreshToken) } });
 }

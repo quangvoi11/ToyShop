@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { store } from '../store';
+import { tokenRefreshed, removeSession } from '../store/slices/authSlice';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1',
@@ -12,7 +14,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-let refreshPromise: Promise<{ data: { data: { accessToken: string } } }> | null = null;
+let refreshPromise: Promise<{ data: { data: { accessToken: string; refreshToken: string } } }> | null = null;
+
+function syncSessionToken(accessToken: string, refreshToken: string) {
+  const activeRole = localStorage.getItem('active_role');
+  const raw = localStorage.getItem('auth_sessions');
+  if (activeRole && raw) {
+    try {
+      const sessions = JSON.parse(raw);
+      if (sessions[activeRole]) {
+        sessions[activeRole].accessToken = accessToken;
+        sessions[activeRole].refreshToken = refreshToken;
+        localStorage.setItem('auth_sessions', JSON.stringify(sessions));
+      }
+    } catch {
+      // ignore malformed storage
+    }
+  }
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+}
 
 api.interceptors.response.use(
   (response) => response,
@@ -36,41 +57,35 @@ api.interceptors.response.use(
         const { data } = await refreshPromise;
         refreshPromise = null;
 
-        const newToken = data.data.accessToken;
-        localStorage.setItem('accessToken', newToken);
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        const newAccess = data.data.accessToken;
+        const newRefresh = data.data.refreshToken;
+
+        syncSessionToken(newAccess, newRefresh);
+        store.dispatch(tokenRefreshed({ accessToken: newAccess, refreshToken: newRefresh }));
+
+        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
         return api(originalRequest);
       } catch {
         refreshPromise = null;
 
-        try {
-          const sessionsRaw = localStorage.getItem('auth_sessions');
-          const activeRole = localStorage.getItem('active_role');
-          if (sessionsRaw && activeRole) {
-            const sessions = JSON.parse(sessionsRaw);
-            delete sessions[activeRole];
-
-            const remaining = Object.keys(sessions);
-            if (remaining.length > 0) {
-              const newRole = remaining[0];
-              localStorage.setItem('auth_sessions', JSON.stringify(sessions));
-              localStorage.setItem('active_role', newRole);
-              localStorage.setItem('accessToken', sessions[newRole].accessToken);
-              localStorage.setItem('refreshToken', sessions[newRole].refreshToken);
-              localStorage.setItem('user', JSON.stringify(sessions[newRole].user));
-              return Promise.reject(error);
-            }
+        const activeRole = localStorage.getItem('active_role');
+        if (activeRole) {
+          store.dispatch(removeSession(activeRole));
+          const hasRemaining = Object.keys(store.getState().auth.sessions).length > 0;
+          if (!hasRemaining) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
           }
-        } catch {
-          // fall through to full cleanup
+        } else {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('auth_sessions');
+          localStorage.removeItem('active_role');
+          window.location.href = '/login';
         }
-
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        localStorage.removeItem('auth_sessions');
-        localStorage.removeItem('active_role');
-        window.location.href = '/login';
         return Promise.reject(error);
       }
     }

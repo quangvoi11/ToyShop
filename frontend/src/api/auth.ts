@@ -35,3 +35,8 @@ export async function changePassword(currentPassword: string, newPassword: strin
   const { data } = await api.post('/auth/change-password', { currentPassword, newPassword });
   return data.data;
 }
+
+export async function logout(refreshToken?: string) {
+  const { data } = await api.post('/auth/logout', { refreshToken });
+  return data.data;
+}

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './features/admin/AdminLayout';
 import AdminDashboard from './features/admin/AdminDashboard';
@@ -35,7 +36,8 @@ export default function App() {
   return (
     <>
       <Toaster position="top-right" richColors closeButton />
-      <Routes>
+      <ErrorBoundary>
+        <Routes>
       <Route element={<MainLayout />}>
         {/* Public routes */}
         <Route path="/" element={<Home />} />
@@ -77,6 +79,7 @@ export default function App() {
         </Route>
       </Route>
     </Routes>
+      </ErrorBoundary>
     </>
   );
 }

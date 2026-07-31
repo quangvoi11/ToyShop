@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Package, Users, DollarSign, TrendingUp, ListOrdered } from 'lucide-react';
 import { getAdminDashboardStats } from '../../api/admin';
 import { formatCurrency } from '../../lib/utils';
@@ -24,6 +24,7 @@ const statusBadgeColors: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const { data: stats, isLoading, isError, refetch } = useQuery({
     queryKey: ['admin-dashboard-stats'],
     queryFn: getAdminDashboardStats,
@@ -130,7 +131,7 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {stats.recentOrders.map((order) => (
-                  <tr key={order.id} className="border-t hover:bg-gray-50 cursor-pointer" onClick={() => window.location.href = `/admin/orders/${order.id}`}>
+                  <tr key={order.id} className="border-t hover:bg-gray-50 cursor-pointer" onClick={() => navigate('/admin/orders')}>
                     <td className="px-4 py-3 font-medium">{order.orderCode}</td>
                     <td className="px-4 py-3 text-gray-600">{order.customerName}</td>
                     <td className="px-4 py-3 font-medium">{formatCurrency(order.total)}</td>

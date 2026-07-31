@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
   Package, LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Tag, FolderTree,
   ChevronLeft, ChevronRight, ChevronDown, Menu, Star, Truck, Newspaper, Building2,
 } from 'lucide-react';
-import { RootState } from '../../store';
-import { logout, switchSession } from '../../store/slices/authSlice';
+import { RootState, useAppDispatch } from '../../store';
+import { logoutThunk, switchSession } from '../../store/slices/authSlice';
 
 interface MenuItem {
   icon?: typeof Package;
@@ -141,7 +141,7 @@ export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const location = useLocation();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user, sessions, activeRole } = useSelector((s: RootState) => s.auth);
   const hasCustomerSession = !!sessions['customer'];
@@ -259,7 +259,7 @@ export default function AdminLayout() {
           </div>
         )}
         <button
-          onClick={() => { dispatch(logout()); navigate('/'); }}
+          onClick={() => { dispatch(logoutThunk()); navigate('/'); }}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-red-400"
           title={collapsed ? 'Đăng xuất' : undefined}
         >
