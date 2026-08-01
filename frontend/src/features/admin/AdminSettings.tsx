@@ -26,7 +26,7 @@ export default function AdminSettings() {
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       if (user?.email) {
         try {
-          await dispatch(loginThunk({ email: user.email, password: passwordForm.newPassword })).unwrap();
+          await dispatch(loginThunk({ email: user.email, password: passwordForm.newPassword, portal: 'admin' })).unwrap();
         } catch {
           toast.error('Đổi mật khẩu thành công nhưng đăng nhập lại thất bại. Vui lòng đăng nhập lại.');
         }

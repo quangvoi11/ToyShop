@@ -17,6 +17,7 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z.string().email('Invalid email'),
   password: z.string().min(1, 'Password is required'),
+  portal: z.enum(['customer', 'admin']).optional().default('customer'),
 });
 
 export const forgotPasswordSchema = z.object({

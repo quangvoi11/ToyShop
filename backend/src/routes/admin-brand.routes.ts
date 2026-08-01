@@ -7,13 +7,12 @@ import { createBrandSchema, updateBrandSchema } from '../validators/brand.valida
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize('ADMIN'));
 
-router.get('/brands/list', ctrl.getList);
-router.get('/brands', ctrl.getAll);
-router.get('/brands/:id', ctrl.getById);
-router.post('/brands', validate(createBrandSchema), ctrl.create);
-router.put('/brands/:id', validate(updateBrandSchema), ctrl.update);
-router.delete('/brands/:id', ctrl.remove);
+router.get('/brands/list', authorize('ADMIN', 'STAFF'), ctrl.getList);
+router.get('/brands', authorize('ADMIN', 'STAFF'), ctrl.getAll);
+router.get('/brands/:id', authorize('ADMIN', 'STAFF'), ctrl.getById);
+router.post('/brands', authorize('ADMIN'), validate(createBrandSchema), ctrl.create);
+router.put('/brands/:id', authorize('ADMIN'), validate(updateBrandSchema), ctrl.update);
+router.delete('/brands/:id', authorize('ADMIN'), ctrl.remove);
 
 export default router;

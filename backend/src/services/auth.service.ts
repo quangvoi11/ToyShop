@@ -38,15 +38,17 @@ export async function register(data: {
   return { user, accessToken, refreshToken };
 }
 
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string, portal = 'customer') {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !user.isActive) {
-    throw new AppError('Invalid email or password', 401);
+
+  const valid = user ? await bcrypt.compare(password, user.password) : false;
+  if (!user || !valid || !user.isActive) {
+    throw new AppError('Email hoặc mật khẩu không đúng', 401);
   }
 
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) {
-    throw new AppError('Invalid email or password', 401);
+  const allowedRoles = portal === 'admin' ? ['ADMIN', 'STAFF'] : ['CUSTOMER'];
+  if (!allowedRoles.includes(user.role)) {
+    throw new AppError('Email hoặc mật khẩu không đúng', 401);
   }
 
   await prisma.user.update({

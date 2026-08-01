@@ -2,11 +2,25 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
-  Package, LayoutDashboard, ShoppingBag, Users, Settings, LogOut, Tag, FolderTree,
-  ChevronLeft, ChevronRight, ChevronDown, Menu, Star, Truck, Newspaper, Building2,
+  Package,
+  LayoutDashboard,
+  ShoppingBag,
+  Users,
+  Settings,
+  LogOut,
+  Tag,
+  FolderTree,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Menu,
+  Star,
+  Truck,
+  Newspaper,
+  Building2,
 } from 'lucide-react';
 import { RootState, useAppDispatch } from '../../store';
-import { logoutThunk, switchSession } from '../../store/slices/authSlice';
+import { logoutThunk } from '../../store/slices/authSlice';
 
 interface MenuItem {
   icon?: typeof Package;
@@ -33,7 +47,7 @@ const menuItems: MenuItem[] = [
   { icon: Newspaper, label: 'Tin tức', path: '/admin/news', roles: ['ADMIN', 'STAFF'] },
   { icon: Building2, label: 'Thương hiệu', path: '/admin/brands', roles: ['ADMIN'] },
   { icon: ShoppingBag, label: 'Đơn hàng', path: '/admin/orders', roles: ['ADMIN', 'STAFF'] },
-  { icon: Users, label: 'Người dùng', path: '/admin/users', roles: ['ADMIN'] },
+  { icon: Users, label: 'Tài khoản người dùng', path: '/admin/users', roles: ['ADMIN'] },
   { icon: Settings, label: 'Cài đặt', path: '/admin/settings', roles: ['ADMIN', 'STAFF'] },
 ];
 
@@ -72,7 +86,9 @@ function MenuGroup({
         type="button"
         onClick={onToggle}
         className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-          childActive ? 'bg-primary/10 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+          childActive
+            ? 'bg-primary/10 text-white'
+            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
         }`}
         title={collapsed ? item.label : undefined}
       >
@@ -143,8 +159,7 @@ export default function AdminLayout() {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user, sessions, activeRole } = useSelector((s: RootState) => s.auth);
-  const hasCustomerSession = !!sessions['customer'];
+  const { user } = useSelector((s: RootState) => s.auth);
 
   useEffect(() => {
     const initial: Record<string, boolean> = {};
@@ -152,7 +167,8 @@ export default function AdminLayout() {
       if (
         item.children &&
         item.children.some(
-          (c) => c.path && (location.pathname === c.path || location.pathname.startsWith(c.path + '/')),
+          (c) =>
+            c.path && (location.pathname === c.path || location.pathname.startsWith(c.path + '/')),
         )
       ) {
         initial[item.label] = true;
@@ -162,43 +178,19 @@ export default function AdminLayout() {
   }, [location.pathname]);
 
   if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) {
-    const currentSession = activeRole ? sessions[activeRole] : null;
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="max-w-md rounded-xl bg-white p-8 text-center shadow-lg">
-          <img src="/images/logo-admin.png" alt="Ele Store" className="mx-auto mb-4 h-12 w-auto" />
-          <h2 className="mb-2 text-lg font-bold">Cần quyền Admin</h2>
-          <p className="mb-6 text-sm text-gray-500">
-            {currentSession ? `Bạn đang đăng nhập với tài khoản ${currentSession.user.firstName} (${currentSession.user.role}).` : 'Vui lòng đăng nhập với tài khoản Admin.'}
-          </p>
-          {hasCustomerSession ? (
-            <button
-              onClick={() => { dispatch(switchSession('admin')); }}
-              className="mb-3 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Chuyển sang Admin
-            </button>
-          ) : (
-            <Link
-              to="/login"
-              className="mb-3 block w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Đăng nhập với tài khoản khác
-            </Link>
-          )}
-          <Link to="/" className="block text-sm text-blue-600 hover:underline">
-            Quay về trang chủ
-          </Link>
-        </div>
-      </div>
-    );
+    return <Navigate to="/admin/login" replace />;
   }
 
   const adminOnlyPaths = menuItems.flatMap((item) => {
     const leaves = item.children ?? [item];
     return leaves.filter((c) => c.roles && !c.roles.includes('STAFF')).map((c) => c.path!);
   });
-  if (user.role === 'STAFF' && adminOnlyPaths.some((p) => location.pathname === p || location.pathname.startsWith(p + '/'))) {
+  if (
+    user.role === 'STAFF' &&
+    adminOnlyPaths.some((p) =>
+      location.pathname === p || (p !== '/admin' && location.pathname.startsWith(p + '/')),
+    )
+  ) {
     return <Navigate to="/admin/products" replace />;
   }
 
@@ -233,7 +225,9 @@ export default function AdminLayout() {
   };
 
   const sidebar = (
-    <div className={`relative flex h-full flex-col bg-gray-900 text-gray-300 transition-all ${collapsed ? 'w-16' : 'w-64'}`}>
+    <div
+      className={`relative flex h-full flex-col bg-gray-900 text-gray-300 transition-all ${collapsed ? 'w-16' : 'w-64'}`}
+    >
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-gray-800 px-4">
         {!collapsed && (
@@ -242,7 +236,9 @@ export default function AdminLayout() {
             <span className="text-base">Admin</span>
           </Link>
         )}
-        {collapsed && <img src="/images/logo-admin.png" alt="Ele Store" className="mx-auto h-7 w-auto" />}
+        {collapsed && (
+          <img src="/images/logo-admin.png" alt="Ele Store" className="mx-auto h-7 w-auto" />
+        )}
       </div>
 
       {/* Nav */}
@@ -254,12 +250,17 @@ export default function AdminLayout() {
       <div className="border-t border-gray-800 p-3">
         {!collapsed && (
           <div className="mb-2 px-3 text-xs text-gray-500">
-            <p className="font-medium text-gray-400">{user.firstName} {user.lastName}</p>
+            <p className="font-medium text-gray-400">
+              {user.firstName} {user.lastName}
+            </p>
             <p>{user.email}</p>
           </div>
         )}
         <button
-          onClick={() => { dispatch(logoutThunk()); navigate('/'); }}
+          onClick={() => {
+            dispatch(logoutThunk());
+            navigate('/admin/login');
+          }}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-red-400"
           title={collapsed ? 'Đăng xuất' : undefined}
         >
@@ -273,7 +274,11 @@ export default function AdminLayout() {
         onClick={() => setCollapsed(!collapsed)}
         className="hidden border-t border-gray-800 p-3 text-center text-gray-500 hover:text-white lg:block"
       >
-        {collapsed ? <ChevronRight className="mx-auto h-5 w-5" /> : <ChevronLeft className="mx-auto h-5 w-5" />}
+        {collapsed ? (
+          <ChevronRight className="mx-auto h-5 w-5" />
+        ) : (
+          <ChevronLeft className="mx-auto h-5 w-5" />
+        )}
       </button>
     </div>
   );

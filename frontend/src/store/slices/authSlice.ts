@@ -13,76 +13,69 @@ interface User {
 interface AuthState {
   user: User | null;
   accessToken: string | null;
-  sessions: Record<string, { user: User; accessToken: string; refreshToken: string }>;
-  activeRole: string | null;
+  refreshToken: string | null;
   loading: boolean;
   error: string | null;
 }
 
-function syncFlatKeys(session: { user: User; accessToken: string; refreshToken: string } | null) {
-  if (session) {
-    localStorage.setItem('accessToken', session.accessToken);
-    localStorage.setItem('refreshToken', session.refreshToken);
-    localStorage.setItem('user', JSON.stringify(session.user));
-  } else {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-  }
-}
-
-function loadSessions(): { sessions: AuthState['sessions']; activeRole: string | null } {
-  const raw = localStorage.getItem('auth_sessions');
-  if (raw) {
-    const sessions = JSON.parse(raw);
-    const activeRole = localStorage.getItem('active_role') as string | null;
-    if (activeRole && sessions[activeRole]) {
-      return { sessions, activeRole };
-    }
-    const roles = Object.keys(sessions);
-    return { sessions, activeRole: roles[0] ?? null };
-  }
-
+function migrateLegacyStorage(): void {
   const accessToken = localStorage.getItem('accessToken');
   const refreshToken = localStorage.getItem('refreshToken');
   const userRaw = localStorage.getItem('user');
-  if (accessToken && refreshToken && userRaw) {
-    const user = JSON.parse(userRaw);
-    const role = user.role?.toLowerCase() ?? 'customer';
-    const sessions = { [role]: { user, accessToken, refreshToken } };
-    localStorage.setItem('auth_sessions', JSON.stringify(sessions));
-    localStorage.setItem('active_role', role);
-    return { sessions, activeRole: role };
-  }
+  if (accessToken && refreshToken && userRaw) return;
 
-  return { sessions: {}, activeRole: null };
+  const raw = localStorage.getItem('auth_sessions');
+  if (!raw) return;
+  try {
+    const sessions = JSON.parse(raw);
+    const roles = Object.keys(sessions);
+    const first = roles[0] ? sessions[roles[0]] : null;
+    if (first?.user && first?.accessToken && first?.refreshToken) {
+      localStorage.setItem('accessToken', first.accessToken);
+      localStorage.setItem('refreshToken', first.refreshToken);
+      localStorage.setItem('user', JSON.stringify(first.user));
+    }
+  } catch {
+    // ignore malformed storage
+  }
+  localStorage.removeItem('auth_sessions');
+  localStorage.removeItem('active_role');
 }
 
-const { sessions: initialSessions, activeRole: initialActiveRole } = loadSessions();
-const activeSession = initialActiveRole ? initialSessions[initialActiveRole] : null;
+migrateLegacyStorage();
+
+const storedAccessToken = localStorage.getItem('accessToken');
+const storedRefreshToken = localStorage.getItem('refreshToken');
+const storedUserRaw = localStorage.getItem('user');
+
+function parseStoredUser(): User | null {
+  if (!storedUserRaw) return null;
+  try {
+    return JSON.parse(storedUserRaw) as User;
+  } catch {
+    return null;
+  }
+}
 
 const initialState: AuthState = {
-  user: activeSession?.user ?? null,
-  accessToken: activeSession?.accessToken ?? null,
-  sessions: initialSessions,
-  activeRole: initialActiveRole,
+  user: storedAccessToken && storedRefreshToken ? parseStoredUser() : null,
+  accessToken: storedAccessToken && storedRefreshToken ? storedAccessToken : null,
+  refreshToken: storedAccessToken && storedRefreshToken ? storedRefreshToken : null,
   loading: false,
   error: null,
 };
 
 export const loginThunk = createAsyncThunk(
   'auth/login',
-  async (body: { email: string; password: string }) => {
-    const result = await authApi.login(body.email, body.password);
-    return result;
+  async (body: { email: string; password: string; portal: 'customer' | 'admin' }) => {
+    return authApi.login(body.email, body.password, body.portal);
   },
 );
 
 export const registerThunk = createAsyncThunk(
   'auth/register',
   async (body: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => {
-    const result = await authApi.register(body);
-    return result;
+    return authApi.register(body);
   },
 );
 
@@ -94,11 +87,10 @@ export const logoutThunk = createAsyncThunk(
   'auth/logoutAsync',
   async (_arg: void, { dispatch, getState }) => {
     const state = getState() as RootState;
-    const role = state.auth.activeRole;
-    const session = role ? state.auth.sessions[role] : null;
-    if (session) {
+    const refreshToken = state.auth.refreshToken;
+    if (refreshToken) {
       try {
-        await authApi.logout(session.refreshToken);
+        await authApi.logout(refreshToken);
       } catch {
         // local logout still proceeds
       }
@@ -112,69 +104,23 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
-      const role = state.activeRole;
-      if (role && state.sessions[role]) {
-        delete state.sessions[role];
-      }
-
-      const remainingRoles = Object.keys(state.sessions);
-      state.activeRole = remainingRoles[0] ?? null;
-
-      const newActive = state.activeRole ? state.sessions[state.activeRole] : null;
-      state.user = newActive?.user ?? null;
-      state.accessToken = newActive?.accessToken ?? null;
-
-      localStorage.setItem('auth_sessions', JSON.stringify(state.sessions));
-      if (state.activeRole) {
-        localStorage.setItem('active_role', state.activeRole);
-      } else {
-        localStorage.removeItem('active_role');
-      }
-      syncFlatKeys(newActive);
+      state.user = null;
+      state.accessToken = null;
+      state.refreshToken = null;
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth_sessions');
+      localStorage.removeItem('active_role');
     },
     clearError(state) {
       state.error = null;
     },
-    switchSession(state, action: PayloadAction<string>) {
-      const role = action.payload;
-      if (!state.sessions[role]) return;
-
-      state.activeRole = role;
-      state.user = state.sessions[role].user;
-      state.accessToken = state.sessions[role].accessToken;
-
-      localStorage.setItem('active_role', role);
-      syncFlatKeys(state.sessions[role]);
-    },
     tokenRefreshed(state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) {
       state.accessToken = action.payload.accessToken;
-      if (state.activeRole && state.sessions[state.activeRole]) {
-        const session = state.sessions[state.activeRole];
-        session.accessToken = action.payload.accessToken;
-        session.refreshToken = action.payload.refreshToken;
-        localStorage.setItem('auth_sessions', JSON.stringify(state.sessions));
-        syncFlatKeys(session);
-      }
-    },
-    removeSession(state, action: PayloadAction<string>) {
-      const role = action.payload;
-      delete state.sessions[role];
-
-      if (state.activeRole === role) {
-        const remaining = Object.keys(state.sessions);
-        state.activeRole = remaining[0] ?? null;
-        const newActive = state.activeRole ? state.sessions[state.activeRole] : null;
-        state.user = newActive?.user ?? null;
-        state.accessToken = newActive?.accessToken ?? null;
-        syncFlatKeys(newActive);
-      }
-
-      localStorage.setItem('auth_sessions', JSON.stringify(state.sessions));
-      if (state.activeRole) {
-        localStorage.setItem('active_role', state.activeRole);
-      } else {
-        localStorage.removeItem('active_role');
-      }
+      state.refreshToken = action.payload.refreshToken;
+      localStorage.setItem('accessToken', action.payload.accessToken);
+      localStorage.setItem('refreshToken', action.payload.refreshToken);
     },
   },
   extraReducers: (builder) => {
@@ -183,50 +129,38 @@ const authSlice = createSlice({
       .addCase(loginThunk.fulfilled, (state, action) => {
         state.loading = false;
         const { user, accessToken, refreshToken } = action.payload;
-        const role = user.role.toLowerCase();
-
-        state.sessions[role] = { user, accessToken, refreshToken };
-        state.activeRole = role;
         state.user = user;
         state.accessToken = accessToken;
-
-        localStorage.setItem('auth_sessions', JSON.stringify(state.sessions));
-        localStorage.setItem('active_role', role);
-        syncFlatKeys(state.sessions[role]);
+        state.refreshToken = refreshToken;
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user', JSON.stringify(user));
       })
       .addCase(loginThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Login failed';
+        state.error = action.error.message || 'Đăng nhập thất bại';
       })
       .addCase(registerThunk.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(registerThunk.fulfilled, (state, action) => {
         state.loading = false;
         const { user, accessToken, refreshToken } = action.payload;
-        const role = user.role.toLowerCase();
-
-        state.sessions[role] = { user, accessToken, refreshToken };
-        state.activeRole = role;
         state.user = user;
         state.accessToken = accessToken;
-
-        localStorage.setItem('auth_sessions', JSON.stringify(state.sessions));
-        localStorage.setItem('active_role', role);
-        syncFlatKeys(state.sessions[role]);
+        state.refreshToken = refreshToken;
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user', JSON.stringify(user));
       })
       .addCase(registerThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Registration failed';
+        state.error = action.error.message || 'Đăng ký thất bại';
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.user = action.payload;
-        if (state.activeRole && state.sessions[state.activeRole]) {
-          state.sessions[state.activeRole].user = action.payload;
-          localStorage.setItem('auth_sessions', JSON.stringify(state.sessions));
-          syncFlatKeys(state.sessions[state.activeRole]);
-        }
+        localStorage.setItem('user', JSON.stringify(action.payload));
       });
   },
 });
 
-export const { logout, clearError, switchSession, removeSession, tokenRefreshed } = authSlice.actions;
+export const { logout, clearError, tokenRefreshed } = authSlice.actions;
 export default authSlice.reducer;

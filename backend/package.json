@@ -11,6 +11,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "db:sync-orders": "ts-node prisma/seeds/syncOrders.ts",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:reset": "prisma migrate reset --force"

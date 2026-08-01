@@ -14,12 +14,8 @@ export default function AdminLogin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result = await dispatch(loginThunk(form)).unwrap();
-      if (result.user.role === 'ADMIN' || result.user.role === 'STAFF') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      await dispatch(loginThunk({ ...form, portal: 'admin' })).unwrap();
+      navigate('/admin');
     } catch {
       // error handled by slice
     }

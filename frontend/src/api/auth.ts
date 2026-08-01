@@ -1,7 +1,7 @@
 import api from './axios';
 
-export async function login(email: string, password: string) {
-  const { data } = await api.post('/auth/login', { email, password });
+export async function login(email: string, password: string, portal: 'customer' | 'admin' = 'customer') {
+  const { data } = await api.post('/auth/login', { email, password, portal });
   return data.data;
 }
 

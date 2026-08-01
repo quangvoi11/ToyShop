@@ -51,7 +51,7 @@ export default function App() {
         <Route path="/payment/result" element={<PaymentResult />} />
 
         {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute roles={['CUSTOMER']} />}>
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/orders" element={<Orders />} />
@@ -63,7 +63,7 @@ export default function App() {
 
       <Route path="/admin/login" element={<AdminLogin />} />
 
-      <Route element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute roles={['ADMIN', 'STAFF']} redirectTo="/admin/login" />}>
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/products" element={<AdminProducts />} />
