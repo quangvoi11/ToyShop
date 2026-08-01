@@ -53,6 +53,14 @@ export async function getStats() {
     CANCELLED: statusCounts['CANCELLED'] || 0,
   };
 
+  const recentOrdersMapped = recentOrders.map((o) => {
+    const { user, ...rest } = o;
+    return {
+      ...rest,
+      customerName: user ? `${user.firstName} ${user.lastName}` : '—',
+    };
+  });
+
   return {
     ordersToday: { count: ordersToday.length, revenue: revenueToday },
     totalProducts,
@@ -60,6 +68,6 @@ export async function getStats() {
     revenueToday,
     revenueThisMonth: revenueThisMonthAgg._sum.total?.toNumber() || 0,
     ordersByStatus: ordersByStatusResult,
-    recentOrders,
+    recentOrders: recentOrdersMapped,
   };
 }

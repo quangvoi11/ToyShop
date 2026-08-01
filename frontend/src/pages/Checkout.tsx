@@ -23,9 +23,7 @@ interface Address {
 
 const paymentMethods = [
   { value: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵' },
-  { value: 'MOMO', label: 'Ví MoMo', icon: '💜' },
   { value: 'VNPAY', label: 'VNPay', icon: '🏦' },
-  { value: 'BANK_TRANSFER', label: 'Chuyển khoản ngân hàng', icon: '🏧' },
 ];
 
 export default function Checkout() {

@@ -69,7 +69,12 @@ export async function getById(id: string) {
   });
 
   if (!order) throw new AppError('Order not found', 404);
-  return order;
+  const { user, ...rest } = order;
+  return {
+    ...rest,
+    customerName: `${user.firstName} ${user.lastName}`,
+    customerEmail: user.email,
+  };
 }
 
 export async function updateStatus(id: string, status: string, cancelReason?: string) {

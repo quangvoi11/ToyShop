@@ -1,6 +1,12 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Heart, Star, ShoppingCart } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { addToCartThunk } from '@/store/slices/cartSlice';
+import { getWishlist, addToWishlist, removeFromWishlist } from '@/api/wishlist';
+import { toast } from 'sonner';
 
 export interface FeaturedProduct {
   id: string;
@@ -20,6 +26,61 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { user } = useAppSelector((s) => s.auth);
+  const queryClient = useQueryClient();
+  const [added, setAdded] = useState(false);
+
+  const { data: wishlist } = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: getWishlist,
+    enabled: !!user,
+  });
+  const wished = !!user && wishlist?.some((w: { productId: string }) => w.productId === product.id);
+
+  const addWishMut = useMutation({
+    mutationFn: () => addToWishlist(product.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      toast.success('Đã thêm vào yêu thích');
+    },
+    onError: () => toast.error('Không thể thêm vào yêu thích'),
+  });
+
+  const removeWishMut = useMutation({
+    mutationFn: () => removeFromWishlist(product.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      toast.success('Đã xóa khỏi yêu thích');
+    },
+    onError: () => toast.error('Không thể xóa khỏi yêu thích'),
+  });
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    try {
+      await dispatch(addToCartThunk({ productId: product.id, quantity: 1 })).unwrap();
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+      toast.success('Đã thêm vào giỏ hàng');
+    } catch {
+      toast.error('Không thể thêm vào giỏ hàng');
+    }
+  };
+
+  const handleWishlistToggle = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (wished) removeWishMut.mutate();
+    else addWishMut.mutate();
+  };
+
   const price = Number(product.basePrice);
   const salePrice = product.salePrice != null ? Number(product.salePrice) : null;
   const discountPercent = salePrice != null ? Math.round(((price - salePrice) / price) * 100) : 0;
@@ -32,10 +93,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         </span>
       )}
       <button
-        className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-gray-400 shadow-sm transition-colors hover:bg-white hover:text-red-500"
+        onClick={handleWishlistToggle}
+        className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm transition-colors hover:bg-white hover:text-red-500 ${wished ? 'text-red-500' : 'text-gray-400'}`}
         aria-label="Yêu thích"
       >
-        <Heart className="h-4 w-4" />
+        <Heart className={`h-4 w-4 ${wished ? 'fill-red-500' : ''}`} />
       </button>
       <Link to={`/products/${product.slug}`}>
         <div className="mb-3 aspect-square overflow-hidden rounded-lg bg-gray-100">
@@ -73,9 +135,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           </span>
         )}
       </div>
-      <button className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90">
+      <button
+        onClick={handleAddToCart}
+        disabled={product.stock <= 0}
+        className={`mt-auto flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-white transition-colors ${added ? 'bg-green-600' : 'bg-primary hover:bg-primary/90'} disabled:opacity-50`}
+      >
         <ShoppingCart className="h-4 w-4" />
-        Thêm vào giỏ
+        {product.stock <= 0 ? 'Hết hàng' : added ? 'Đã thêm ✓' : 'Thêm vào giỏ'}
       </button>
     </div>
   );
