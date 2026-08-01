@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { prisma } from '../utils/prisma';
 import { config } from '../config';
 import { AppError } from '../middleware/errorHandler';
+import { logger } from '../utils/logger';
 import type { JwtPayload } from '../middleware/auth';
 import { sendResetEmail } from './email.service';
 
@@ -131,7 +132,8 @@ export async function forgotPassword(email: string) {
   const resetUrl = `${config.clientUrl}/reset-password?token=${resetToken}`;
   try {
     await sendResetEmail(email, resetUrl);
-  } catch {
+  } catch (err) {
+    logger.error('Failed to send reset email:', err);
     throw new AppError('Không thể gửi email, vui lòng thử lại sau', 502);
   }
 
