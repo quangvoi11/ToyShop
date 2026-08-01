@@ -73,36 +73,9 @@ async function sendViaBrevoApi(to: string, resetUrl: string): Promise<void> {
   }
 }
 
-async function sendViaSendgridApi(to: string, resetUrl: string): Promise<void> {
-  const { name, address } = parseSender(config.smtp.from);
-  const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.sendgridApiKey}`,
-    },
-    body: JSON.stringify({
-      personalizations: [{ to: [{ email: to }] }],
-      from: { email: address, name },
-      subject: 'Đặt lại mật khẩu - Ele Store',
-      content: [{ type: 'text/html', value: buildResetEmailHtml(resetUrl) }],
-    }),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`SendGrid API error ${response.status}: ${detail}`);
-  }
-}
-
 export async function sendResetEmail(to: string, resetUrl: string): Promise<void> {
   if (config.brevoApiKey) {
     await sendViaBrevoApi(to, resetUrl);
-    return;
-  }
-
-  if (config.sendgridApiKey) {
-    await sendViaSendgridApi(to, resetUrl);
     return;
   }
 
