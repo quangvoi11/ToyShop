@@ -27,6 +27,14 @@ export function errorHandler(
     return;
   }
 
+  if ((err as Error & { type?: string }).type === 'entity.parse.failed') {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid JSON in request body',
+    });
+    return;
+  }
+
   logger.error('Unhandled error:', err);
 
   res.status(500).json({

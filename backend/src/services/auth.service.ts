@@ -129,7 +129,11 @@ export async function forgotPassword(email: string) {
   });
 
   const resetUrl = `${config.clientUrl}/reset-password?token=${resetToken}`;
-  await sendResetEmail(email, resetUrl);
+  try {
+    await sendResetEmail(email, resetUrl);
+  } catch {
+    throw new AppError('Không thể gửi email, vui lòng thử lại sau', 502);
+  }
 
   return { message: 'If this email exists, a reset link has been sent' };
 }
