@@ -6,7 +6,7 @@ import { config } from '../config';
 import { AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
 import type { JwtPayload } from '../middleware/auth';
-import { sendResetEmail } from './email.service';
+import { sendResetEmail, sendVerificationEmail } from './email.service';
 
 export async function register(data: {
   email: string;
@@ -21,6 +21,9 @@ export async function register(data: {
   }
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
   const user = await prisma.user.create({
     data: {
       email: data.email,
@@ -29,14 +32,22 @@ export async function register(data: {
       lastName: data.lastName,
       phone: data.phone,
       role: 'CUSTOMER',
+      verificationToken: hashToken(verificationToken),
+      verificationExpires,
     },
-    select: { id: true, email: true, firstName: true, lastName: true, phone: true, role: true },
+    select: { id: true, email: true, firstName: true, lastName: true },
   });
 
-  const accessToken = generateAccessToken({ userId: user.id, role: user.role });
-  const refreshToken = await issueRefreshToken(user.id);
+  const verifyUrl = `${config.clientUrl}/verify-email?token=${verificationToken}`;
+  try {
+    await sendVerificationEmail(user.email, user.firstName, verifyUrl);
+  } catch (err) {
+    logger.error('Failed to send verification email:', err);
+    await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+    throw new AppError('Không thể gửi email xác thực, vui lòng thử lại sau', 502, 'EMAIL_SEND_FAILED');
+  }
 
-  return { user, accessToken, refreshToken };
+  return { message: 'Vui lòng kiểm tra email để xác thực tài khoản' };
 }
 
 export async function login(email: string, password: string, portal = 'customer') {
@@ -45,6 +56,10 @@ export async function login(email: string, password: string, portal = 'customer'
   const valid = user ? await bcrypt.compare(password, user.password) : false;
   if (!user || !valid || !user.isActive) {
     throw new AppError('Email hoặc mật khẩu không đúng', 401);
+  }
+
+  if (user.emailVerifiedAt === null) {
+    throw new AppError('Tài khoản chưa được xác thực email', 403, 'EMAIL_NOT_VERIFIED');
   }
 
   const allowedRoles = portal === 'admin' ? ['ADMIN', 'STAFF'] : ['CUSTOMER'];
@@ -61,10 +76,80 @@ export async function login(email: string, password: string, portal = 'customer'
   const refreshToken = await issueRefreshToken(user.id);
 
   return {
-    user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role },
+    user: {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      avatar: user.avatar,
+      role: user.role,
+    },
     accessToken,
     refreshToken,
   };
+}
+
+export async function verifyEmail(token: string) {
+  const user = await prisma.user.findFirst({
+    where: {
+      verificationToken: hashToken(token),
+      verificationExpires: { gt: new Date() },
+      emailVerifiedAt: null,
+      isActive: true,
+    },
+  });
+  if (!user) throw new AppError('Liên kết xác thực không hợp lệ hoặc đã hết hạn', 400);
+
+  return prisma.user.update({
+    where: { id: user.id },
+    data: { emailVerifiedAt: new Date(), verificationToken: null, verificationExpires: null },
+    select: { id: true, email: true, firstName: true, lastName: true, phone: true, avatar: true, role: true, createdAt: true, emailVerifiedAt: true },
+  });
+}
+
+export async function resendVerification(email: string) {
+  const user = await prisma.user.findFirst({ where: { email, emailVerifiedAt: null } });
+
+  if (user) {
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { verificationToken: hashToken(verificationToken), verificationExpires },
+    });
+
+    const verifyUrl = `${config.clientUrl}/verify-email?token=${verificationToken}`;
+    try {
+      await sendVerificationEmail(user.email, user.firstName, verifyUrl);
+    } catch (err) {
+      logger.error('Failed to send verification email:', err);
+      throw new AppError('Không thể gửi email xác thực, vui lòng thử lại sau', 502, 'EMAIL_SEND_FAILED');
+    }
+  }
+
+  return { message: 'Nếu email tồn tại, liên kết xác thực sẽ được gửi' };
+}
+
+export async function updateProfile(userId: string, data: {
+  firstName?: string;
+  lastName?: string;
+  phone: string;
+  avatar?: string;
+}) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError('User not found', 404);
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(data.firstName !== undefined ? { firstName: data.firstName } : {}),
+      ...(data.lastName !== undefined ? { lastName: data.lastName } : {}),
+      phone: data.phone,
+      ...(data.avatar !== undefined ? { avatar: data.avatar === '' ? null : data.avatar } : {}),
+    },
+    select: { id: true, email: true, firstName: true, lastName: true, phone: true, avatar: true, role: true, createdAt: true },
+  });
 }
 
 export async function getProfile(userId: string) {
@@ -99,6 +184,8 @@ export async function refreshTokens(refreshToken: string) {
       email: token.user.email,
       firstName: token.user.firstName,
       lastName: token.user.lastName,
+      phone: token.user.phone,
+      avatar: token.user.avatar,
       role: token.user.role,
     },
     accessToken,

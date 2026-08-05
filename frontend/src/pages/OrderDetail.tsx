@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Package, XCircle, Check } from 'lucide-react';
+import { ArrowLeft, Package, XCircle, Check, FileText } from 'lucide-react';
 import { getOrderById, cancelOrder, retryPayment } from '../api/orders';
+import { downloadInvoice } from '../api/invoice';
 import { formatCurrency } from '../lib/utils';
 import { toast } from 'sonner';
 
@@ -89,6 +90,14 @@ export default function OrderDetail() {
       toast.error('Không thể tạo link thanh toán');
     },
   });
+
+  const handleDownloadInvoice = async () => {
+    try {
+      await downloadInvoice(`/orders/${id}/invoice`);
+    } catch {
+      toast.error('Không thể tải hóa đơn');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -234,15 +243,15 @@ export default function OrderDetail() {
             </div>
           )}
 
-          {order.address && (
-            <div className="rounded-xl border bg-white p-6">
-              <h2 className="mb-3 text-lg font-semibold">Địa chỉ giao hàng</h2>
-              <p className="text-sm">{order.address.street}</p>
-              <p className="text-sm text-gray-500">{order.address.ward}, {order.address.district}</p>
-              <p className="text-sm text-gray-500">{order.address.city}</p>
-              <p className="mt-2 text-sm font-medium">📞 {order.address.phone}</p>
-            </div>
-          )}
+          <div className="rounded-xl border bg-white p-6">
+            <h2 className="mb-3 text-lg font-semibold">Địa chỉ giao hàng</h2>
+            <p className="text-sm font-medium">👤 {order.shippingRecipientName || '—'}</p>
+            <p className="text-sm">{order.shippingStreet || '—'}</p>
+            <p className="text-sm text-gray-500">
+              {[order.shippingWard, order.shippingCity].filter(Boolean).join(', ') || '—'}
+            </p>
+            <p className="mt-2 text-sm font-medium">📞 {order.shippingPhone || '—'}</p>
+          </div>
 
           {order.note && (
             <div className="rounded-xl border bg-white p-6">
@@ -252,6 +261,14 @@ export default function OrderDetail() {
           )}
 
           {/* Cancel button */}
+          <button
+            onClick={handleDownloadInvoice}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary px-4 py-3 text-sm font-medium text-primary hover:bg-primary/10"
+          >
+            <FileText className="h-4 w-4" />
+            Xuất hóa đơn PDF
+          </button>
+
           {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
             <button
               onClick={() => { if (window.confirm('Bạn có chắc muốn hủy đơn hàng này?')) cancelMut.mutate(); }}

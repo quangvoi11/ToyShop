@@ -7,6 +7,9 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
+  phone?: string;
+  avatar?: string;
+  emailVerifiedAt?: string | null;
   role: string;
 }
 
@@ -141,15 +144,8 @@ const authSlice = createSlice({
         state.error = action.error.message || 'Đăng nhập thất bại';
       })
       .addCase(registerThunk.pending, (state) => { state.loading = true; state.error = null; })
-      .addCase(registerThunk.fulfilled, (state, action) => {
+      .addCase(registerThunk.fulfilled, (state) => {
         state.loading = false;
-        const { user, accessToken, refreshToken } = action.payload;
-        state.user = user;
-        state.accessToken = accessToken;
-        state.refreshToken = refreshToken;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', JSON.stringify(user));
       })
       .addCase(registerThunk.rejected, (state, action) => {
         state.loading = false;

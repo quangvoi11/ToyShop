@@ -7,6 +7,7 @@ import {
   getAdminOrders, getAdminOrder, updateOrderStatus, updateOrderPaymentStatus,
 } from '../../api/admin';
 import { formatCurrency } from '../../lib/utils';
+import { downloadInvoice } from '../../api/invoice';
 import { ORDER_STATUS_LABELS } from '../../../../shared/constants';
 import { toast } from 'sonner';
 
@@ -130,6 +131,15 @@ export default function AdminOrders() {
 
   const handleViewDetail = (id: string) => {
     setSelectedId(id);
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!detail) return;
+    try {
+      await downloadInvoice(`/admin/orders/${detail.id}/invoice`);
+    } catch {
+      toast.error('Không thể tải hóa đơn');
+    }
   };
 
   const orders = result?.data || [];
@@ -304,18 +314,28 @@ export default function AdminOrders() {
                     <div className="space-y-1 text-sm">
                       <p><span className="text-gray-500">Tên:</span> {detail.customerName}</p>
                       <p><span className="text-gray-500">Email:</span> {detail.customerEmail}</p>
-                      <p><span className="text-gray-500">SĐT:</span> {detail.address?.phone || '—'}</p>
+                      <p><span className="text-gray-500">SĐT:</span> {detail.shippingPhone || detail.address?.phone || '—'}</p>
                     </div>
                   </div>
 
                   {/* Shipping Address */}
                   <div className="rounded-xl border p-4">
-                    <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700"><MapPin className="h-4 w-4" /> Địa chỉ giao hàng</h3>
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700"><MapPin className="h-4 w-4" /> Địa chỉ giao hàng</h3>
+                      <button
+                        onClick={handleDownloadInvoice}
+                        className="flex items-center gap-1 rounded-lg border border-primary px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10"
+                      >
+                        <FileText className="h-3.5 w-3.5" /> Hóa đơn PDF
+                      </button>
+                    </div>
                     <div className="space-y-1 text-sm">
-                      <p>{detail.address?.street}</p>
-                      <p>{detail.address?.ward}, {detail.address?.district}</p>
-                      <p>{detail.address?.city}</p>
-                      <p className="text-gray-500">SĐT: {detail.address?.phone}</p>
+                      <p>👤 {detail.shippingRecipientName || '—'}</p>
+                      <p>{detail.shippingStreet || detail.address?.street || '—'}</p>
+                      <p>
+                        {[detail.shippingWard || detail.address?.ward, detail.shippingCity || detail.address?.city].filter(Boolean).join(', ') || '—'}
+                      </p>
+                      <p className="text-gray-500">SĐT: {detail.shippingPhone || detail.address?.phone || '—'}</p>
                     </div>
                   </div>
                 </div>

@@ -141,13 +141,17 @@ export interface AdminOrderDetail extends AdminOrderSummary {
   shippingFee: number;
   discount: number;
   note?: string;
-  address: {
+  address?: {
     street: string;
     ward: string;
-    district: string;
     city: string;
     phone: string;
-  };
+  } | null;
+  shippingRecipientName?: string | null;
+  shippingPhone?: string | null;
+  shippingStreet?: string | null;
+  shippingWard?: string | null;
+  shippingCity?: string | null;
   items: Array<{
     productName: string;
     productSku: string;
@@ -198,10 +202,14 @@ export interface OrderDetail {
   address?: {
     street: string;
     ward: string;
-    district: string;
     city: string;
     phone: string;
-  };
+  } | null;
+  shippingRecipientName?: string | null;
+  shippingPhone?: string | null;
+  shippingStreet?: string | null;
+  shippingWard?: string | null;
+  shippingCity?: string | null;
   items: Array<{
     id: string;
     productName: string;

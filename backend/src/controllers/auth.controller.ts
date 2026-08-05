@@ -47,3 +47,18 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
   const profile = await authService.getProfile(req.user!.userId);
   res.json({ success: true, data: profile });
 });
+
+export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
+  const result = await authService.verifyEmail(req.body.token);
+  res.json({ success: true, data: result });
+});
+
+export const resendVerification = asyncHandler(async (req: Request, res: Response) => {
+  const result = await authService.resendVerification(req.body.email);
+  res.json({ success: true, data: result });
+});
+
+export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
+  const result = await authService.updateProfile(req.user!.userId, req.body);
+  res.json({ success: true, data: result });
+});

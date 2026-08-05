@@ -17,9 +17,9 @@ export async function getAddresses(userId: string) {
 export async function create(data: {
   userId: string;
   label?: string;
+  recipientName: string;
   street: string;
   ward: string;
-  district: string;
   city: string;
   phone: string;
   isDefault?: boolean;
@@ -32,9 +32,9 @@ export async function create(data: {
 
 export async function update(id: string, userId: string, data: {
   label?: string;
+  recipientName?: string;
   street?: string;
   ward?: string;
-  district?: string;
   city?: string;
   phone?: string;
   isDefault?: boolean;

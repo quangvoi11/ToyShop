@@ -7,9 +7,9 @@ import { toast } from 'sonner';
 interface AddressData {
   id: string;
   label: string | null;
+  recipientName?: string;
   street: string;
   ward: string;
-  district: string;
   city: string;
   phone: string;
   isDefault: boolean;
@@ -17,16 +17,22 @@ interface AddressData {
 
 interface AddressForm {
   label: string;
+  recipientName: string;
   street: string;
   ward: string;
-  district: string;
   city: string;
   phone: string;
   isDefault: boolean;
 }
 
 const emptyForm: AddressForm = {
-  label: '', street: '', ward: '', district: '', city: '', phone: '', isDefault: false,
+  label: '',
+  recipientName: '',
+  street: '',
+  ward: '',
+  city: '',
+  phone: '',
+  isDefault: false,
 };
 
 export default function Addresses() {
@@ -49,7 +55,10 @@ export default function Addresses() {
       toast.success('Đã thêm địa chỉ');
     },
     onError: (err) => {
-      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể thêm địa chỉ');
+      toast.error(
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Không thể thêm địa chỉ',
+      );
     },
   });
 
@@ -63,7 +72,10 @@ export default function Addresses() {
       toast.success('Đã cập nhật địa chỉ');
     },
     onError: (err) => {
-      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể cập nhật địa chỉ');
+      toast.error(
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          'Không thể cập nhật địa chỉ',
+      );
     },
   });
 
@@ -96,9 +108,9 @@ export default function Addresses() {
     setEditingId(addr.id);
     setForm({
       label: addr.label || '',
+      recipientName: addr.recipientName || '',
       street: addr.street,
       ward: addr.ward,
-      district: addr.district,
       city: addr.city,
       phone: addr.phone,
       isDefault: addr.isDefault,
@@ -142,24 +154,28 @@ export default function Addresses() {
       ) : addresses?.length > 0 ? (
         <div className="space-y-4">
           {addresses.map((addr: AddressData) => (
-            <div key={addr.id} className="relative rounded-xl border bg-white p-6 shadow-sm">
-              {addr.isDefault && (
-                <span className="absolute right-4 top-4 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  Mặc định
-                </span>
-              )}
+            <div key={addr.id} className="rounded-xl border bg-white p-6 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-1 rounded-lg bg-primary/10 p-2">
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  {addr.label && <p className="mb-1 text-sm font-medium text-gray-700">{addr.label}</p>}
-                  <p className="text-sm text-gray-600">{addr.street}, {addr.ward}</p>
-                  <p className="text-sm text-gray-600">{addr.district}, {addr.city}</p>
+                  {addr.label && (
+                    <p className="mb-1 text-sm font-medium text-gray-700">{addr.label}</p>
+                  )}
+                  <p className="text-sm font-medium">👤 {addr.recipientName}</p>
+                  <p className="text-sm text-gray-600">
+                    {addr.street}, {addr.ward}
+                  </p>
+                  <p className="text-sm text-gray-600">{addr.city}</p>
                   <p className="mt-1 text-sm text-gray-500">📞 {addr.phone}</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  {!addr.isDefault && (
+                  {addr.isDefault ? (
+                    <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary ">
+                      Mặc định
+                    </span>
+                  ) : (
                     <button
                       onClick={() => setDefaultMut.mutate(addr.id)}
                       className="flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50"
@@ -174,7 +190,9 @@ export default function Addresses() {
                     <Edit2 className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => { if (confirm('Xóa địa chỉ này?')) deleteMut.mutate(addr.id); }}
+                    onClick={() => {
+                      if (confirm('Xóa địa chỉ này?')) deleteMut.mutate(addr.id);
+                    }}
                     className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -197,8 +215,16 @@ export default function Addresses() {
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 pt-10 pb-10">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-bold">{editingId ? 'Sửa địa chỉ' : 'Thêm địa chỉ mới'}</h2>
-              <button onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyForm); }}>
+              <h2 className="text-lg font-bold">
+                {editingId ? 'Sửa địa chỉ' : 'Thêm địa chỉ mới'}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingId(null);
+                  setForm(emptyForm);
+                }}
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -208,6 +234,13 @@ export default function Addresses() {
                 value={form.label}
                 onChange={(e) => setForm({ ...form, label: e.target.value })}
                 className="w-full rounded-lg border px-3 py-2 text-sm"
+              />
+              <input
+                placeholder="Tên người nhận *"
+                value={form.recipientName}
+                onChange={(e) => setForm({ ...form, recipientName: e.target.value })}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+                required
               />
               <input
                 placeholder="Số điện thoại *"
@@ -223,18 +256,11 @@ export default function Addresses() {
                 className="w-full rounded-lg border px-3 py-2 text-sm"
                 required
               />
-              <div className="grid gap-3 md:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2">
                 <input
                   placeholder="Phường/Xã *"
                   value={form.ward}
                   onChange={(e) => setForm({ ...form, ward: e.target.value })}
-                  className="rounded-lg border px-3 py-2 text-sm"
-                  required
-                />
-                <input
-                  placeholder="Quận/Huyện *"
-                  value={form.district}
-                  onChange={(e) => setForm({ ...form, district: e.target.value })}
                   className="rounded-lg border px-3 py-2 text-sm"
                   required
                 />
@@ -257,7 +283,11 @@ export default function Addresses() {
             </div>
             <div className="mt-6 flex justify-end gap-3 border-t pt-4">
               <button
-                onClick={() => { setShowModal(false); setEditingId(null); setForm(emptyForm); }}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingId(null);
+                  setForm(emptyForm);
+                }}
                 className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50"
               >
                 Hủy

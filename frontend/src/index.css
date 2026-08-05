@@ -10,7 +10,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 0 84% 60%;
+    --primary: 213 94% 68%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -25,7 +25,7 @@
     --ring: 0 84% 60%;
     --radius: 0.5rem;
     --accent-blue: #041675;
-    --accent-gold: #FCB833;
+    --accent-gold: #fcb833;
   }
 
   * {
@@ -34,7 +34,12 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family:
+      'Plus Jakarta Sans',
+      'Inter',
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
 }
 

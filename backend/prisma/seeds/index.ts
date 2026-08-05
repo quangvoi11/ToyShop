@@ -29,7 +29,7 @@ async function upsertUser(opts: {
 
   const user = await prisma.user.upsert({
     where: { email },
-    update: hashed ? { password: hashed } : {},
+    update: { emailVerifiedAt: new Date(), ...(hashed ? { password: hashed } : {}) },
     create: {
       email,
       password: hashed || (await bcrypt.hash(generatePassword(), 10)),
@@ -37,13 +37,16 @@ async function upsertUser(opts: {
       lastName,
       role,
       isActive,
+      emailVerifiedAt: new Date(),
     },
   });
 
   if (password) {
     console.log(`[SEED] ${email} — password: ${password}`);
   } else {
-    console.log(`[SEED] ${email} — already exists, password unchanged (set SEED_*_PASSWORD to rotate)`);
+    console.log(
+      `[SEED] ${email} — already exists, password unchanged (set SEED_*_PASSWORD to rotate)`,
+    );
   }
 
   return user;
@@ -53,7 +56,13 @@ async function main() {
   console.log('Seeding database...');
 
   // ─── Admin User ──────────────────────────────────────────────
-  await upsertUser({ email: 'admin@toyshop.com', firstName: 'Admin', lastName: 'Admin', role: 'ADMIN', envPassword: process.env.SEED_ADMIN_PASSWORD });
+  await upsertUser({
+    email: 'admin@toyshop.com',
+    firstName: 'Admin',
+    lastName: 'Admin',
+    role: 'ADMIN',
+    envPassword: process.env.SEED_ADMIN_PASSWORD,
+  });
 
   // ─── Categories ──────────────────────────────────────────────
   const parentCategories: Record<string, string> = {};
@@ -61,9 +70,17 @@ async function main() {
     { name: 'LEGO', slug: 'lego', description: 'Đồ chơi lắp ráp LEGO chính hãng' },
     { name: 'Búp bê', slug: 'bup-be', description: 'Búp bê và phụ kiện' },
     { name: 'Xe điều khiển', slug: 'xe-dieu-khien', description: 'Xe điều khiển từ xa' },
-    { name: 'Đồ chơi giáo dục', slug: 'do-choi-giao-duc', description: 'Đồ chơi phát triển trí tuệ' },
+    {
+      name: 'Đồ chơi giáo dục',
+      slug: 'do-choi-giao-duc',
+      description: 'Đồ chơi phát triển trí tuệ',
+    },
     { name: 'Thú nhồi bông', slug: 'thu-nhoi-bong', description: 'Thú nhồi bông mềm mại' },
-    { name: 'Mô hình & Figure', slug: 'mo-hinh-figure', description: 'Mô hình lắp ráp và tượng nhân vật' },
+    {
+      name: 'Mô hình & Figure',
+      slug: 'mo-hinh-figure',
+      description: 'Mô hình lắp ráp và tượng nhân vật',
+    },
     { name: 'Board Game', slug: 'board-game', description: 'Board game và trò chơi gia đình' },
   ];
 
@@ -103,7 +120,7 @@ async function main() {
 
   // ─── Brands ──────────────────────────────────────────────────
   const existingBrands = await prisma.brand.findMany();
-  const existingBrandSlugs = existingBrands.map(b => b.slug);
+  const existingBrandSlugs = existingBrands.map((b) => b.slug);
 
   const newBrands = [
     { name: 'LEGO', slug: 'lego' },
@@ -136,7 +153,13 @@ async function main() {
     { email: 'customer2@toyshop.vn', firstName: 'Trần', lastName: 'Thị Bình', role: 'CUSTOMER' },
     { email: 'vip@toyshop.vn', firstName: 'Lê', lastName: 'Văn Cường', role: 'CUSTOMER' },
     { email: 'staff@toyshop.vn', firstName: 'Phạm', lastName: 'Thị Dung', role: 'STAFF' },
-    { email: 'banned@toyshop.vn', firstName: 'Hoàng', lastName: 'Văn E', role: 'CUSTOMER', isActive: false },
+    {
+      email: 'banned@toyshop.vn',
+      firstName: 'Hoàng',
+      lastName: 'Văn E',
+      role: 'CUSTOMER',
+      isActive: false,
+    },
   ];
 
   const userIds: Record<string, string> = {};
@@ -157,8 +180,24 @@ async function main() {
   const customer1Id = userIds['customer1@toyshop.vn'];
 
   const addresses = [
-    { userId: customer1Id, label: 'Nhà riêng', street: '123 Nguyễn Huệ', ward: 'Bến Nghé', district: 'Quận 1', city: 'TP HCM', isDefault: true, phone: '0901234567' },
-    { userId: customer1Id, label: 'Văn phòng', street: '456 Lê Lợi', ward: 'Phường 3', district: 'Quận Gò Vấp', city: 'TP HCM', isDefault: false, phone: '0901234567' },
+    {
+      userId: customer1Id,
+      label: 'Nhà riêng',
+      street: '123 Nguyễn Huệ',
+      ward: 'Bến Nghé',
+      city: 'TP HCM',
+      isDefault: true,
+      phone: '0901234567',
+    },
+    {
+      userId: customer1Id,
+      label: 'Văn phòng',
+      street: '456 Lê Lợi',
+      ward: 'Phường 3',
+      city: 'TP HCM',
+      isDefault: false,
+      phone: '0901234567',
+    },
   ];
 
   const addressIds: string[] = [];
@@ -176,7 +215,15 @@ async function main() {
   console.log(`Created ${addresses.length} addresses`);
 
   // ─── Products ────────────────────────────────────────────────
-  const legoSubSlugs = ['lego-city', 'lego-technic', 'lego-star-wars', 'lego-duplo', 'lego-creator', 'lego-friends', 'lego-harry-potter'];
+  const legoSubSlugs = [
+    'lego-city',
+    'lego-technic',
+    'lego-star-wars',
+    'lego-duplo',
+    'lego-creator',
+    'lego-friends',
+    'lego-harry-potter',
+  ];
   const legoSubCats = await prisma.category.findMany({
     where: { slug: { in: legoSubSlugs } },
   });
@@ -196,29 +243,237 @@ async function main() {
   };
 
   const products = [
-    { name: 'LEGO City Police Station 60316', slug: 'lego-city-police-station-60316', basePrice: 1290000, sku: 'LEGO-60316', categorySlug: 'lego-city', brandSlug: 'lego', stock: 50, isFeatured: true },
-    { name: 'LEGO Technic Porsche 911 RSR 42096', slug: 'lego-technic-porsche-911-rsr-42096', basePrice: 3490000, sku: 'LEGO-42096', categorySlug: 'lego-technic', brandSlug: 'lego', stock: 20, isFeatured: false },
-    { name: 'LEGO Star Wars Millennium Falcon 75192', slug: 'lego-star-wars-millennium-falcon-75192', basePrice: 8990000, sku: 'LEGO-75192', categorySlug: 'lego-star-wars', brandSlug: 'lego', stock: 5, isFeatured: true },
-    { name: 'LEGO Duplo Farm', slug: 'lego-duplo-farm', basePrice: 650000, sku: 'LEGO-DUPLO-FARM', categorySlug: 'lego-duplo', brandSlug: 'lego', stock: 40, isFeatured: false },
-    { name: 'LEGO Harry Potter Castle', slug: 'lego-harry-potter-castle', basePrice: 3200000, sku: 'LEGO-HP-CASTLE', categorySlug: 'lego-harry-potter', brandSlug: 'lego', stock: 10, isFeatured: true },
-    { name: 'LEGO Creator Expert Mustang', slug: 'lego-creator-expert-mustang', basePrice: 2490000, sku: 'LEGO-CREATOR-MUSTANG', categorySlug: 'lego-creator', brandSlug: 'lego', stock: 15, isFeatured: false },
-    { name: 'LEGO Friends Heartlake City 41732', slug: 'lego-friends-heartlake-city-41732', basePrice: 2590000, sku: 'LEGO-41732', categorySlug: 'lego-friends', brandSlug: 'lego', stock: 30, isFeatured: false },
-    { name: 'Gundam RX-78-2 Entry Grade', slug: 'gundam-rx-78-2-entry-grade', basePrice: 180000, sku: 'BANDAI-RX78-EG', categorySlug: 'mo-hinh-figure', brandSlug: 'bandai', stock: 100, isFeatured: false },
-    { name: 'Gundam Wing Zero EW Ver', slug: 'gundam-wing-zero-ew-ver', basePrice: 650000, sku: 'BANDAI-WZ-EW', categorySlug: 'mo-hinh-figure', brandSlug: 'bandai', stock: 60, isFeatured: false },
-    { name: 'Barbie Dreamhouse', slug: 'barbie-dreamhouse', basePrice: 1800000, sku: 'BARBIE-DREAMHOUSE', categorySlug: 'bup-be', brandSlug: 'barbie', stock: 25, isFeatured: false },
-    { name: 'Barbie Fashionista', slug: 'barbie-fashionista', basePrice: 250000, sku: 'BARBIE-FASHION', categorySlug: 'bup-be', brandSlug: 'barbie', stock: 80, isFeatured: false },
-    { name: 'Hot Wheels 5-pack', slug: 'hot-wheels-5-pack', basePrice: 250000, salePrice: 199000, sku: 'HW-5PACK', categorySlug: 'xe-dieu-khien', brandSlug: 'hot-wheels', stock: 200, isFeatured: false },
-    { name: 'Bộ thí nghiệm khoa học 100 thí nghiệm', slug: 'bo-thi-nghiem-khoa-hoc-100', basePrice: 350000, sku: 'EDU-SCIENCE-100', categorySlug: 'do-choi-giao-duc', brandSlug: 'fisher-price', stock: 45, isFeatured: false },
-    { name: 'Board game Catan', slug: 'board-game-catan', basePrice: 450000, sku: 'BG-CATAN', categorySlug: 'board-game', brandSlug: 'hasbro', stock: 30, isFeatured: false },
-    { name: 'Board game Uno', slug: 'board-game-uno', basePrice: 80000, sku: 'BG-UNO', categorySlug: 'board-game', brandSlug: 'hasbro', stock: 150, isFeatured: false },
-    { name: 'Gấu bông 1m', slug: 'gau-bong-1m', basePrice: 320000, sku: 'STUFFED-1M', categorySlug: 'thu-nhoi-bong', brandSlug: 'gau-bong', stock: 35, isFeatured: true },
-    { name: 'Gấu bông Disney', slug: 'gau-bong-disney', basePrice: 250000, sku: 'STUFFED-DISNEY', categorySlug: 'thu-nhoi-bong', brandSlug: 'disney', stock: 50, isFeatured: false },
-    { name: 'Bộ lắp ráp robot năng lượng mặt trời', slug: 'bo-lap-rap-robot-nang-luong-mat-troi', basePrice: 280000, sku: 'EDU-SOLAR-ROBOT', categorySlug: 'do-choi-giao-duc', brandSlug: 'fisher-price', stock: 40, isFeatured: false },
-    { name: 'VTech Máy tính bảng học tập', slug: 'vtech-may-tinh-bang-hoc-tap', basePrice: 550000, sku: 'VTECH-TABLET', categorySlug: 'do-choi-giao-duc', brandSlug: 'vtech', stock: 30, isFeatured: false },
-    { name: 'Xe điều khiển Ferrari', slug: 'xe-dieu-khien-ferrari', basePrice: 420000, sku: 'RC-FERRARI', categorySlug: 'xe-dieu-khien', brandSlug: 'mattel', stock: 25, isFeatured: false },
-    { name: 'Máy bay điều khiển', slug: 'may-bay-dieu-khien', basePrice: 380000, sku: 'RC-PLANE', categorySlug: 'xe-dieu-khien', brandSlug: 'mattel', stock: 20, isFeatured: false },
-    { name: 'Funko Pop Harry Potter', slug: 'funko-pop-harry-potter', basePrice: 180000, sku: 'FUNKO-HP', categorySlug: 'mo-hinh-figure', brandSlug: 'funko', stock: 100, isFeatured: false },
-    { name: 'Funko Pop Marvel', slug: 'funko-pop-marvel', basePrice: 180000, sku: 'FUNKO-MARVEL', categorySlug: 'mo-hinh-figure', brandSlug: 'funko', stock: 100, isFeatured: false },
+    {
+      name: 'LEGO City Police Station 60316',
+      slug: 'lego-city-police-station-60316',
+      basePrice: 1290000,
+      sku: 'LEGO-60316',
+      categorySlug: 'lego-city',
+      brandSlug: 'lego',
+      stock: 50,
+      isFeatured: true,
+    },
+    {
+      name: 'LEGO Technic Porsche 911 RSR 42096',
+      slug: 'lego-technic-porsche-911-rsr-42096',
+      basePrice: 3490000,
+      sku: 'LEGO-42096',
+      categorySlug: 'lego-technic',
+      brandSlug: 'lego',
+      stock: 20,
+      isFeatured: false,
+    },
+    {
+      name: 'LEGO Star Wars Millennium Falcon 75192',
+      slug: 'lego-star-wars-millennium-falcon-75192',
+      basePrice: 8990000,
+      sku: 'LEGO-75192',
+      categorySlug: 'lego-star-wars',
+      brandSlug: 'lego',
+      stock: 5,
+      isFeatured: true,
+    },
+    {
+      name: 'LEGO Duplo Farm',
+      slug: 'lego-duplo-farm',
+      basePrice: 650000,
+      sku: 'LEGO-DUPLO-FARM',
+      categorySlug: 'lego-duplo',
+      brandSlug: 'lego',
+      stock: 40,
+      isFeatured: false,
+    },
+    {
+      name: 'LEGO Harry Potter Castle',
+      slug: 'lego-harry-potter-castle',
+      basePrice: 3200000,
+      sku: 'LEGO-HP-CASTLE',
+      categorySlug: 'lego-harry-potter',
+      brandSlug: 'lego',
+      stock: 10,
+      isFeatured: true,
+    },
+    {
+      name: 'LEGO Creator Expert Mustang',
+      slug: 'lego-creator-expert-mustang',
+      basePrice: 2490000,
+      sku: 'LEGO-CREATOR-MUSTANG',
+      categorySlug: 'lego-creator',
+      brandSlug: 'lego',
+      stock: 15,
+      isFeatured: false,
+    },
+    {
+      name: 'LEGO Friends Heartlake City 41732',
+      slug: 'lego-friends-heartlake-city-41732',
+      basePrice: 2590000,
+      sku: 'LEGO-41732',
+      categorySlug: 'lego-friends',
+      brandSlug: 'lego',
+      stock: 30,
+      isFeatured: false,
+    },
+    {
+      name: 'Gundam RX-78-2 Entry Grade',
+      slug: 'gundam-rx-78-2-entry-grade',
+      basePrice: 180000,
+      sku: 'BANDAI-RX78-EG',
+      categorySlug: 'mo-hinh-figure',
+      brandSlug: 'bandai',
+      stock: 100,
+      isFeatured: false,
+    },
+    {
+      name: 'Gundam Wing Zero EW Ver',
+      slug: 'gundam-wing-zero-ew-ver',
+      basePrice: 650000,
+      sku: 'BANDAI-WZ-EW',
+      categorySlug: 'mo-hinh-figure',
+      brandSlug: 'bandai',
+      stock: 60,
+      isFeatured: false,
+    },
+    {
+      name: 'Barbie Dreamhouse',
+      slug: 'barbie-dreamhouse',
+      basePrice: 1800000,
+      sku: 'BARBIE-DREAMHOUSE',
+      categorySlug: 'bup-be',
+      brandSlug: 'barbie',
+      stock: 25,
+      isFeatured: false,
+    },
+    {
+      name: 'Barbie Fashionista',
+      slug: 'barbie-fashionista',
+      basePrice: 250000,
+      sku: 'BARBIE-FASHION',
+      categorySlug: 'bup-be',
+      brandSlug: 'barbie',
+      stock: 80,
+      isFeatured: false,
+    },
+    {
+      name: 'Hot Wheels 5-pack',
+      slug: 'hot-wheels-5-pack',
+      basePrice: 250000,
+      salePrice: 199000,
+      sku: 'HW-5PACK',
+      categorySlug: 'xe-dieu-khien',
+      brandSlug: 'hot-wheels',
+      stock: 200,
+      isFeatured: false,
+    },
+    {
+      name: 'Bộ thí nghiệm khoa học 100 thí nghiệm',
+      slug: 'bo-thi-nghiem-khoa-hoc-100',
+      basePrice: 350000,
+      sku: 'EDU-SCIENCE-100',
+      categorySlug: 'do-choi-giao-duc',
+      brandSlug: 'fisher-price',
+      stock: 45,
+      isFeatured: false,
+    },
+    {
+      name: 'Board game Catan',
+      slug: 'board-game-catan',
+      basePrice: 450000,
+      sku: 'BG-CATAN',
+      categorySlug: 'board-game',
+      brandSlug: 'hasbro',
+      stock: 30,
+      isFeatured: false,
+    },
+    {
+      name: 'Board game Uno',
+      slug: 'board-game-uno',
+      basePrice: 80000,
+      sku: 'BG-UNO',
+      categorySlug: 'board-game',
+      brandSlug: 'hasbro',
+      stock: 150,
+      isFeatured: false,
+    },
+    {
+      name: 'Gấu bông 1m',
+      slug: 'gau-bong-1m',
+      basePrice: 320000,
+      sku: 'STUFFED-1M',
+      categorySlug: 'thu-nhoi-bong',
+      brandSlug: 'gau-bong',
+      stock: 35,
+      isFeatured: true,
+    },
+    {
+      name: 'Gấu bông Disney',
+      slug: 'gau-bong-disney',
+      basePrice: 250000,
+      sku: 'STUFFED-DISNEY',
+      categorySlug: 'thu-nhoi-bong',
+      brandSlug: 'disney',
+      stock: 50,
+      isFeatured: false,
+    },
+    {
+      name: 'Bộ lắp ráp robot năng lượng mặt trời',
+      slug: 'bo-lap-rap-robot-nang-luong-mat-troi',
+      basePrice: 280000,
+      sku: 'EDU-SOLAR-ROBOT',
+      categorySlug: 'do-choi-giao-duc',
+      brandSlug: 'fisher-price',
+      stock: 40,
+      isFeatured: false,
+    },
+    {
+      name: 'VTech Máy tính bảng học tập',
+      slug: 'vtech-may-tinh-bang-hoc-tap',
+      basePrice: 550000,
+      sku: 'VTECH-TABLET',
+      categorySlug: 'do-choi-giao-duc',
+      brandSlug: 'vtech',
+      stock: 30,
+      isFeatured: false,
+    },
+    {
+      name: 'Xe điều khiển Ferrari',
+      slug: 'xe-dieu-khien-ferrari',
+      basePrice: 420000,
+      sku: 'RC-FERRARI',
+      categorySlug: 'xe-dieu-khien',
+      brandSlug: 'mattel',
+      stock: 25,
+      isFeatured: false,
+    },
+    {
+      name: 'Máy bay điều khiển',
+      slug: 'may-bay-dieu-khien',
+      basePrice: 380000,
+      sku: 'RC-PLANE',
+      categorySlug: 'xe-dieu-khien',
+      brandSlug: 'mattel',
+      stock: 20,
+      isFeatured: false,
+    },
+    {
+      name: 'Funko Pop Harry Potter',
+      slug: 'funko-pop-harry-potter',
+      basePrice: 180000,
+      sku: 'FUNKO-HP',
+      categorySlug: 'mo-hinh-figure',
+      brandSlug: 'funko',
+      stock: 100,
+      isFeatured: false,
+    },
+    {
+      name: 'Funko Pop Marvel',
+      slug: 'funko-pop-marvel',
+      basePrice: 180000,
+      sku: 'FUNKO-MARVEL',
+      categorySlug: 'mo-hinh-figure',
+      brandSlug: 'funko',
+      stock: 100,
+      isFeatured: false,
+    },
   ];
 
   const productIds: string[] = [];
@@ -253,13 +508,70 @@ async function main() {
   const vipId = userIds['vip@toyshop.vn'];
 
   const orderFixtures = [
-    { userId: customer1Id, addressId: addressIds[0], status: 'DELIVERED', paymentStatus: 'PAID', daysAgo: 5, itemIndexes: [0, 11], note: 'Giao hàng giờ hành chính' },
-    { userId: customer2Id, addressId: addressIds[0], status: 'SHIPPING', paymentStatus: 'PAID', daysAgo: 2, itemIndexes: [1, 7], note: 'Gọi trước khi giao' },
-    { userId: vipId, addressId: addressIds[0], status: 'PROCESSING', paymentStatus: 'PAID', daysAgo: 1, itemIndexes: [4, 13], note: undefined },
-    { userId: customer1Id, addressId: addressIds[1], status: 'CONFIRMED', paymentStatus: 'UNPAID', daysAgo: 0, itemIndexes: [3, 15], note: undefined },
-    { userId: customer2Id, addressId: addressIds[0], status: 'PENDING', paymentStatus: 'UNPAID', daysAgo: 0, itemIndexes: [9, 10], note: undefined },
-    { userId: vipId, addressId: addressIds[0], status: 'CANCELLED', paymentStatus: 'UNPAID', daysAgo: 3, itemIndexes: [2], note: 'Đổi ý không mua nữa', cancelReason: 'Khách hàng yêu cầu hủy' },
-    { userId: customer1Id, addressId: addressIds[0], status: 'DELIVERED', paymentStatus: 'PAID', daysAgo: 10, itemIndexes: [12, 17, 18], note: undefined },
+    {
+      userId: customer1Id,
+      addressId: addressIds[0],
+      status: 'DELIVERED',
+      paymentStatus: 'PAID',
+      daysAgo: 5,
+      itemIndexes: [0, 11],
+      note: 'Giao hàng giờ hành chính',
+    },
+    {
+      userId: customer2Id,
+      addressId: addressIds[0],
+      status: 'SHIPPING',
+      paymentStatus: 'PAID',
+      daysAgo: 2,
+      itemIndexes: [1, 7],
+      note: 'Gọi trước khi giao',
+    },
+    {
+      userId: vipId,
+      addressId: addressIds[0],
+      status: 'PROCESSING',
+      paymentStatus: 'PAID',
+      daysAgo: 1,
+      itemIndexes: [4, 13],
+      note: undefined,
+    },
+    {
+      userId: customer1Id,
+      addressId: addressIds[1],
+      status: 'CONFIRMED',
+      paymentStatus: 'UNPAID',
+      daysAgo: 0,
+      itemIndexes: [3, 15],
+      note: undefined,
+    },
+    {
+      userId: customer2Id,
+      addressId: addressIds[0],
+      status: 'PENDING',
+      paymentStatus: 'UNPAID',
+      daysAgo: 0,
+      itemIndexes: [9, 10],
+      note: undefined,
+    },
+    {
+      userId: vipId,
+      addressId: addressIds[0],
+      status: 'CANCELLED',
+      paymentStatus: 'UNPAID',
+      daysAgo: 3,
+      itemIndexes: [2],
+      note: 'Đổi ý không mua nữa',
+      cancelReason: 'Khách hàng yêu cầu hủy',
+    },
+    {
+      userId: customer1Id,
+      addressId: addressIds[0],
+      status: 'DELIVERED',
+      paymentStatus: 'PAID',
+      daysAgo: 10,
+      itemIndexes: [12, 17, 18],
+      note: undefined,
+    },
   ];
 
   for (const fix of orderFixtures) {
@@ -318,10 +630,46 @@ async function main() {
   pastDate.setMonth(pastDate.getMonth() - 1);
 
   const coupons = [
-    { code: 'WELCOME10', discountType: 'PERCENTAGE', discountValue: 10, minOrder: 200000, maxDiscount: 50000, usageLimit: 100, startsAt: pastDate, expiresAt: futureDate },
-    { code: 'FREESHIP', description: 'Miễn phí vận chuyển', discountType: 'FIXED', discountValue: 30000, minOrder: 500000, maxDiscount: 30000, usageLimit: 200, startsAt: pastDate, expiresAt: futureDate },
-    { code: 'GIAM50K', discountType: 'FIXED', discountValue: 50000, minOrder: 300000, usageLimit: 100, startsAt: pastDate, expiresAt: futureDate },
-    { code: 'BLACKFRIDAY', discountType: 'PERCENTAGE', discountValue: 30, minOrder: 1000000, maxDiscount: 300000, usageLimit: 50, startsAt: futureDate, expiresAt: new Date(futureDate.getTime() + 7 * 24 * 60 * 60 * 1000) },
+    {
+      code: 'WELCOME10',
+      discountType: 'PERCENTAGE',
+      discountValue: 10,
+      minOrder: 200000,
+      maxDiscount: 50000,
+      usageLimit: 100,
+      startsAt: pastDate,
+      expiresAt: futureDate,
+    },
+    {
+      code: 'FREESHIP',
+      description: 'Miễn phí vận chuyển',
+      discountType: 'FIXED',
+      discountValue: 30000,
+      minOrder: 500000,
+      maxDiscount: 30000,
+      usageLimit: 200,
+      startsAt: pastDate,
+      expiresAt: futureDate,
+    },
+    {
+      code: 'GIAM50K',
+      discountType: 'FIXED',
+      discountValue: 50000,
+      minOrder: 300000,
+      usageLimit: 100,
+      startsAt: pastDate,
+      expiresAt: futureDate,
+    },
+    {
+      code: 'BLACKFRIDAY',
+      discountType: 'PERCENTAGE',
+      discountValue: 30,
+      minOrder: 1000000,
+      maxDiscount: 300000,
+      usageLimit: 50,
+      startsAt: futureDate,
+      expiresAt: new Date(futureDate.getTime() + 7 * 24 * 60 * 60 * 1000),
+    },
   ];
 
   for (const c of coupons) {

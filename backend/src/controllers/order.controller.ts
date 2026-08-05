@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as orderService from '../services/order.service';
 import * as paymentService from '../services/payment.service';
+import { generateInvoicePDF } from '../services/pdf.service';
 
 export const create = asyncHandler(async (req: Request, res: Response) => {
   const order = await orderService.create({
@@ -39,4 +40,12 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
 export const cancelOrder = asyncHandler(async (req: Request, res: Response) => {
   const order = await orderService.cancelOrder(req.user!.userId, req.params.id, req.body.reason);
   res.json({ success: true, data: order });
+});
+
+export const getInvoice = asyncHandler(async (req: Request, res: Response) => {
+  const order = await orderService.getById(req.user!.userId, req.params.id);
+  const buffer = await generateInvoicePDF(order);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="invoice-${order.orderCode}.pdf"`);
+  res.send(buffer);
 });

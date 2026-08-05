@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { MailCheck } from 'lucide-react';
 import { registerThunk, clearError } from '../store/slices/authSlice';
+import { resendVerification } from '../api/auth';
 import { useAppDispatch, useAppSelector } from '../store';
+import { toast } from 'sonner';
 
 export default function Register() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { loading, error } = useAppSelector((s) => s.auth);
   const [form, setForm] = useState({
     firstName: '',
@@ -16,6 +18,8 @@ export default function Register() {
     phone: '',
   });
   const [validationError, setValidationError] = useState('');
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,13 +36,72 @@ export default function Register() {
 
     try {
       await dispatch(registerThunk(form)).unwrap();
-      navigate('/');
+      setRegisteredEmail(form.email);
     } catch {
       // error handled by slice
     }
   };
 
+  const handleResend = async () => {
+    if (resendCooldown > 0 || !registeredEmail) return;
+    try {
+      const res = await resendVerification(registeredEmail);
+      toast.success(res.message || 'Đã gửi lại email xác thực');
+      setResendCooldown(60);
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể gửi lại email');
+    }
+  };
+
   const displayError = validationError || error;
+
+  if (registeredEmail) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <div className="rounded-2xl border bg-white p-8 shadow-sm">
+            <div className="mb-8 text-center">
+              <img src="/images/logo-header.png" alt="Ele Store" className="mx-auto h-16 w-auto" />
+            </div>
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <MailCheck className="h-8 w-8 text-primary" />
+              </div>
+              <h1 className="text-2xl font-bold">Kiểm tra email của bạn</h1>
+              <p className="mt-3 text-sm text-gray-500">
+                Chúng tôi đã gửi liên kết xác thực tới{' '}
+                <span className="font-medium text-gray-700">{registeredEmail}</span>. Vui lòng kiểm tra hộp thư (kể cả thư rác).
+              </p>
+              <div className="mt-6 space-y-3">
+                <button
+                  onClick={handleResend}
+                  disabled={resendCooldown > 0}
+                  className="w-full rounded-lg bg-primary px-6 py-2.5 font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {resendCooldown > 0 ? `Gửi lại email (${resendCooldown}s)` : 'Gửi lại email'}
+                </button>
+                <Link
+                  to="/login"
+                  className="block w-full rounded-lg border px-6 py-2.5 font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Quay lại đăng nhập
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-12">

@@ -84,7 +84,6 @@ async function main() {
             label: o.address.label,
             street: o.address.street,
             ward: o.address.ward,
-            district: o.address.district,
             city: o.address.city,
             country: o.address.country,
             isDefault: o.address.isDefault,

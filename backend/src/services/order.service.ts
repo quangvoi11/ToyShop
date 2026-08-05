@@ -83,6 +83,11 @@ export async function create(data: {
         orderCode,
         userId: data.userId,
         addressId: data.addressId,
+        shippingRecipientName: address.recipientName,
+        shippingPhone: address.phone,
+        shippingStreet: address.street,
+        shippingWard: address.ward,
+        shippingCity: address.city,
         subtotal,
         shippingFee,
         discount,
@@ -133,7 +138,10 @@ export async function getByUser(userId: string, page = 1, limit = 20) {
 export async function getById(userId: string, orderId: string) {
   const order = await prisma.order.findFirst({
     where: { id: orderId, userId },
-    include: { items: true, address: true },
+    include: {
+      items: true,
+      user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+    },
   });
   if (!order) throw new AppError('Order not found', 404);
   return order;

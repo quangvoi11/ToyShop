@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { register, login, me, refresh, logout, forgotPassword, resetPassword, changePassword } from '../controllers/auth.controller';
+import { register, login, me, refresh, logout, forgotPassword, resetPassword, changePassword, verifyEmail, resendVerification, updateProfile } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from '../validators/auth.validator';
+import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema, verifyEmailSchema, resendVerificationSchema, updateProfileSchema } from '../validators/auth.validator';
 
 const router = Router();
 
@@ -56,6 +56,22 @@ const changePasswordLimiter = rateLimit({
   message: { success: false, message: 'Too many attempts, please try again later' },
 });
 
+const verifyEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many verification attempts, please try again later' },
+});
+
+const resendVerificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many resend requests, please try again later' },
+});
+
 router.post('/auth/register', registerLimiter, validate(registerSchema), register);
 router.post('/auth/login', loginLimiter, validate(loginSchema), login);
 router.get('/auth/me', authenticate, me);
@@ -64,5 +80,8 @@ router.post('/auth/logout', authenticate, logout);
 router.post('/auth/change-password', authenticate, changePasswordLimiter, validate(changePasswordSchema), changePassword);
 router.post('/auth/forgot-password', forgotPasswordLimiter, validate(forgotPasswordSchema), forgotPassword);
 router.post('/auth/reset-password', resetPasswordLimiter, validate(resetPasswordSchema), resetPassword);
+router.post('/auth/verify-email', verifyEmailLimiter, validate(verifyEmailSchema), verifyEmail);
+router.post('/auth/resend-verification', resendVerificationLimiter, validate(resendVerificationSchema), resendVerification);
+router.patch('/auth/profile', authenticate, validate(updateProfileSchema), updateProfile);
 
 export default router;

@@ -50,7 +50,7 @@ export default function Header() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
             <img src="/images/logo-header.png" alt="Ele Store" className="h-20 w-auto" />
-            <span className="text-xl text-primary  text-blue-400">Ele Store</span>
+            <span className="text-xxl  text-blue-400">Ele Store</span>
           </Link>
 
           {/* Search bar */}
@@ -84,16 +84,34 @@ export default function Header() {
 
             {accessToken && user?.role === 'CUSTOMER' ? (
               <div className="group relative">
-                <button className="flex items-center gap-1 rounded-lg p-2 hover:bg-gray-100">
-                  <User className="h-5 w-5" />
-                  <span className="hidden text-sm md:inline">{user?.firstName}</span>
+                <button className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100">
+                  {user?.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt="Avatar"
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
                 </button>
                 <div className="invisible absolute right-0 top-full z-50 w-56 rounded-lg border bg-white py-2 shadow-lg opacity-0 transition-all group-hover:visible group-hover:opacity-100">
-                  <div className="border-b px-4 py-2">
-                    <p className="text-sm font-medium">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
+                  <div className="flex items-center gap-3 border-b px-4 py-2">
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt="Avatar"
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-8 w-8 rounded-full bg-gray-100 p-1.5 text-gray-400" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {user?.firstName} {user?.lastName}
+                      </p>
+                      <p className="truncate text-xs text-gray-500">{user?.email}</p>
+                    </div>
                   </div>
 
                   <Link to="/profile" className="block px-4 py-2 text-sm hover:bg-gray-50">

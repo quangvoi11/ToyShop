@@ -33,3 +33,18 @@ export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: passwordSchema,
 });
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1),
+});
+
+export const resendVerificationSchema = z.object({
+  email: z.string().email(),
+});
+
+export const updateProfileSchema = z.object({
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  phone: z.string().min(8, 'Số điện thoại phải có ít nhất 8 ký tự'),
+  avatar: z.string().url().optional().or(z.literal('')),
+});

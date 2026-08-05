@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import * as adminOrderService from '../services/admin-order.service';
+import { generateInvoicePDF } from '../services/pdf.service';
 
 export const getAll = asyncHandler(async (req: Request, res: Response) => {
   const page = Number(req.query.page) || 1;
@@ -31,4 +32,12 @@ export const updatePaymentStatus = asyncHandler(async (req: Request, res: Respon
   const { paymentStatus } = req.body;
   const order = await adminOrderService.updatePaymentStatus(req.params.id, paymentStatus);
   res.json({ success: true, data: order });
+});
+
+export const getInvoice = asyncHandler(async (req: Request, res: Response) => {
+  const order = await adminOrderService.getById(req.params.id);
+  const buffer = await generateInvoicePDF(order);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="invoice-${order.orderCode}.pdf"`);
+  res.send(buffer);
 });

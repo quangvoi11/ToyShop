@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
 
 let refreshPromise: Promise<{ data: { data: { accessToken: string; refreshToken: string } } }> | null = null;
 
-const AUTH_ENDPOINTS = /\/auth\/(login|register|refresh|logout|forgot-password|reset-password|change-password)$/;
+const AUTH_ENDPOINTS = /\/auth\/(login|register|refresh|logout|forgot-password|reset-password|change-password|verify-email|resend-verification)$/;
 
 function isAuthEndpoint(url?: string): boolean {
   return !!url && AUTH_ENDPOINTS.test(url);
@@ -81,6 +81,9 @@ api.interceptors.response.use(
 
     if (error.response?.data?.message) {
       error.message = error.response.data.message;
+      if (error.response.data.code) {
+        error.code = error.response.data.code;
+      }
     }
     return Promise.reject(error);
   },

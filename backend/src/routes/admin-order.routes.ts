@@ -13,5 +13,6 @@ router.get('/orders', ctrl.getAll);
 router.get('/orders/:id', ctrl.getById);
 router.patch('/orders/:id/status', validate(updateOrderStatusSchema), ctrl.updateStatus);
 router.patch('/orders/:id/payment', validate(updatePaymentStatusSchema), ctrl.updatePaymentStatus);
+router.get('/orders/:id/invoice', ctrl.getInvoice);
 
 export default router;

@@ -18,7 +18,7 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
 }));
-app.use(cors({ origin: config.cors.origin, credentials: true }));
+app.use(cors({ origin: config.cors.origin, credentials: true, exposedHeaders: ['Content-Disposition'] }));
 
 // Performance
 app.use(compression());

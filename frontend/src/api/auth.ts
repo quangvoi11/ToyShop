@@ -40,3 +40,25 @@ export async function logout(refreshToken?: string) {
   const { data } = await api.post('/auth/logout', { refreshToken });
   return data.data;
 }
+
+export async function verifyEmail(token: string) {
+  const { data } = await api.post('/auth/verify-email', { token });
+  return data.data;
+}
+
+export async function resendVerification(email: string) {
+  const { data } = await api.post('/auth/resend-verification', { email });
+  return data.data;
+}
+
+export async function updateProfile(body: { firstName?: string; lastName?: string; phone: string; avatar?: string }) {
+  const { data } = await api.patch('/auth/profile', body);
+  return data.data;
+}
+
+export async function uploadAvatar(file: File) {
+  const form = new FormData();
+  form.append('image', file);
+  const { data } = await api.post('/upload/avatar', form, { params: { folder: 'toyshop/avatars' } });
+  return data.data;
+}

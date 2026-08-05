@@ -12,9 +12,9 @@ export async function getAddress(id: string) {
 
 export async function createAddress(body: {
   label?: string;
+  recipientName: string;
   street: string;
   ward: string;
-  district: string;
   city: string;
   phone: string;
   isDefault?: boolean;
@@ -25,9 +25,9 @@ export async function createAddress(body: {
 
 export async function updateAddress(id: string, body: Partial<{
   label: string;
+  recipientName: string;
   street: string;
   ward: string;
-  district: string;
   city: string;
   phone: string;
   isDefault: boolean;

@@ -13,9 +13,9 @@ import { toast } from 'sonner';
 interface Address {
   id: string;
   label?: string;
+  recipientName?: string;
   street: string;
   ward: string;
-  district: string;
   city: string;
   phone: string;
   isDefault?: boolean;
@@ -39,12 +39,22 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{
-    valid: boolean; discountType?: string; discountValue?: number; minOrder?: number; maxDiscount?: number | null;
+    valid: boolean;
+    discountType?: string;
+    discountValue?: number;
+    minOrder?: number;
+    maxDiscount?: number | null;
   } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [orderError, setOrderError] = useState('');
   const [addressForm, setAddressForm] = useState({
-    label: '', street: '', ward: '', district: '', city: '', phone: '', isDefault: true,
+    label: '',
+    recipientName: '',
+    street: '',
+    ward: '',
+    city: '',
+    phone: '',
+    isDefault: true,
   });
 
   const { data: addresses, refetch: refetchAddresses } = useQuery({
@@ -74,7 +84,7 @@ export default function Checkout() {
   if (appliedCoupon?.valid && appliedCoupon.discountValue) {
     const dv = appliedCoupon.discountValue;
     if (appliedCoupon.discountType === 'PERCENTAGE') {
-      discount = Math.min(subtotal * dv / 100, appliedCoupon.maxDiscount || Infinity);
+      discount = Math.min((subtotal * dv) / 100, appliedCoupon.maxDiscount || Infinity);
     } else {
       discount = Math.min(dv, subtotal);
     }
@@ -95,7 +105,9 @@ export default function Checkout() {
       refetchAddresses();
       toast.success('Đã lưu địa chỉ');
     } catch (err) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể lưu địa chỉ';
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Không thể lưu địa chỉ';
       toast.error(message);
     }
   };
@@ -144,7 +156,9 @@ export default function Checkout() {
         navigate(`/orders/${order.id}`);
       }
     } catch (err) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại.';
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Đặt hàng thất bại. Vui lòng thử lại.';
       setOrderError(message);
     } finally {
       setSubmitting(false);
@@ -166,7 +180,10 @@ export default function Checkout() {
           <div className="rounded-xl border bg-white p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Địa chỉ giao hàng</h2>
-              <button onClick={() => setShowAddressForm(!showAddressForm)} className="text-sm font-medium text-primary hover:underline">
+              <button
+                onClick={() => setShowAddressForm(!showAddressForm)}
+                className="text-sm font-medium text-primary hover:underline"
+              >
                 {showAddressForm ? 'Hủy' : 'Thêm địa chỉ'}
               </button>
             </div>
@@ -174,27 +191,79 @@ export default function Checkout() {
             {showAddressForm ? (
               <form onSubmit={handleSubmitAddress} className="space-y-3">
                 <div className="grid gap-3 md:grid-cols-2">
-                  <input placeholder="Label (VD: Nhà riêng)" value={addressForm.label} onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" />
-                  <input placeholder="Số điện thoại *" value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" required />
+                  <input
+                    placeholder="Label (VD: Nhà riêng)"
+                    value={addressForm.label}
+                    onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
+                    className="rounded-lg border px-3 py-2 text-sm"
+                  />
+                  <input
+                    placeholder="Tên người nhận *"
+                    value={addressForm.recipientName}
+                    onChange={(e) => setAddressForm({ ...addressForm, recipientName: e.target.value })}
+                    className="rounded-lg border px-3 py-2 text-sm"
+                    required
+                  />
+                  <input
+                    placeholder="Số điện thoại *"
+                    value={addressForm.phone}
+                    onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                    className="rounded-lg border px-3 py-2 text-sm"
+                    required
+                  />
                 </div>
-                <input placeholder="Địa chỉ (số nhà, đường) *" value={addressForm.street} onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })} className="w-full rounded-lg border px-3 py-2 text-sm" required />
-                <div className="grid gap-3 md:grid-cols-3">
-                  <input placeholder="Phường/Xã *" value={addressForm.ward} onChange={(e) => setAddressForm({ ...addressForm, ward: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" required />
-                  <input placeholder="Quận/Huyện *" value={addressForm.district} onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" required />
-                  <input placeholder="Thành phố *" value={addressForm.city} onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" required />
+                <input
+                  placeholder="Địa chỉ (số nhà, đường) *"
+                  value={addressForm.street}
+                  onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                  required
+                />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <input
+                    placeholder="Phường/Xã *"
+                    value={addressForm.ward}
+                    onChange={(e) => setAddressForm({ ...addressForm, ward: e.target.value })}
+                    className="rounded-lg border px-3 py-2 text-sm"
+                    required
+                  />
+                  <input
+                    placeholder="Thành phố *"
+                    value={addressForm.city}
+                    onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                    className="rounded-lg border px-3 py-2 text-sm"
+                    required
+                  />
                 </div>
-                <button type="submit" className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary/90">
+                <button
+                  type="submit"
+                  className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                >
                   Lưu địa chỉ
                 </button>
               </form>
             ) : (
               <div className="space-y-3">
                 {addresses?.map((addr: Address) => (
-                  <label key={addr.id} className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 hover:bg-gray-50">
-                    <input type="radio" name="address" checked={selectedAddress === addr.id} onChange={() => setSelectedAddress(addr.id)} className="mt-0.5" />
+                  <label
+                    key={addr.id}
+                    className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 hover:bg-gray-50"
+                  >
+                    <input
+                      type="radio"
+                      name="address"
+                      checked={selectedAddress === addr.id}
+                      onChange={() => setSelectedAddress(addr.id)}
+                      className="mt-0.5"
+                    />
                     <div>
-                      <p className="font-medium">{addr.label ? `${addr.label} - ` : ''}{addr.street}</p>
-                      <p className="text-sm text-gray-500">{addr.ward}, {addr.district}, {addr.city}</p>
+                      <p className="font-medium">
+                        {addr.label ? `${addr.label} - ` : ''}
+                        {addr.recipientName ? `👤 ${addr.recipientName} ` : ''}{addr.street}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {addr.ward}, {addr.city}
+                      </p>
                       <p className="text-sm text-gray-500">📞 {addr.phone}</p>
                     </div>
                   </label>
@@ -208,8 +277,17 @@ export default function Checkout() {
             <h2 className="mb-4 text-lg font-semibold">Phương thức thanh toán</h2>
             <div className="space-y-3">
               {paymentMethods.map((pm) => (
-                <label key={pm.value} className="flex cursor-pointer items-center gap-3 rounded-lg border p-4 hover:bg-gray-50">
-                  <input type="radio" name="payment" value={pm.value} checked={paymentMethod === pm.value} onChange={() => setPaymentMethod(pm.value)} />
+                <label
+                  key={pm.value}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border p-4 hover:bg-gray-50"
+                >
+                  <input
+                    type="radio"
+                    name="payment"
+                    value={pm.value}
+                    checked={paymentMethod === pm.value}
+                    onChange={() => setPaymentMethod(pm.value)}
+                  />
                   <span className="text-xl">{pm.icon}</span>
                   <span className="text-sm font-medium">{pm.label}</span>
                 </label>
@@ -237,7 +315,12 @@ export default function Checkout() {
             {orderError && (
               <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
                 {orderError}
-                <button onClick={() => setOrderError('')} className="float-right font-medium hover:underline">×</button>
+                <button
+                  onClick={() => setOrderError('')}
+                  className="float-right font-medium hover:underline"
+                >
+                  ×
+                </button>
               </div>
             )}
             <div className="mb-4 space-y-3">
@@ -245,7 +328,11 @@ export default function Checkout() {
                 <div key={item.id} className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-gray-100">
                     {item.product?.images?.[0]?.url ? (
-                      <img src={item.product.images[0].url} alt={item.product.name} className="h-full w-full object-cover" />
+                      <img
+                        src={item.product.images[0].url}
+                        alt={item.product.name}
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <span className="text-lg">🧱</span>
                     )}
@@ -254,7 +341,12 @@ export default function Checkout() {
                     <p className="line-clamp-1">{item.product?.name}</p>
                     <p className="text-gray-500">x{item.quantity}</p>
                   </div>
-                  <p className="text-sm font-medium">{formatCurrency(Number(item.product?.salePrice || item.product?.basePrice || 0) * item.quantity)}</p>
+                  <p className="text-sm font-medium">
+                    {formatCurrency(
+                      Number(item.product?.salePrice || item.product?.basePrice || 0) *
+                        item.quantity,
+                    )}
+                  </p>
                 </div>
               ))}
             </div>
@@ -264,7 +356,9 @@ export default function Checkout() {
               {appliedCoupon?.valid ? (
                 <div className="flex items-center justify-between rounded-lg bg-green-50 p-3 text-sm">
                   <span className="text-green-700">Giảm: -{formatCurrency(discount)}</span>
-                  <button onClick={handleRemoveCoupon} className="text-green-600 hover:underline">Hủy</button>
+                  <button onClick={handleRemoveCoupon} className="text-green-600 hover:underline">
+                    Hủy
+                  </button>
                 </div>
               ) : (
                 <div className="flex gap-2">
@@ -285,13 +379,25 @@ export default function Checkout() {
               {couponError && <p className="mt-1 text-xs text-red-500">{couponError}</p>}
             </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">Tạm tính</span><span>{formatCurrency(subtotal)}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Phí vận chuyển</span><span>{shipping === 0 ? 'Miễn phí' : formatCurrency(shipping)}</span></div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Tạm tính</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Phí vận chuyển</span>
+                <span>{shipping === 0 ? 'Miễn phí' : formatCurrency(shipping)}</span>
+              </div>
               {discount > 0 && (
-                <div className="flex justify-between"><span className="text-gray-500">Giảm giá</span><span className="text-red-500">-{formatCurrency(discount)}</span></div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Giảm giá</span>
+                  <span className="text-red-500">-{formatCurrency(discount)}</span>
+                </div>
               )}
               <hr />
-              <div className="flex justify-between text-lg font-bold"><span>Tổng</span><span className="text-primary">{formatCurrency(total)}</span></div>
+              <div className="flex justify-between text-lg font-bold">
+                <span>Tổng</span>
+                <span className="text-primary">{formatCurrency(total)}</span>
+              </div>
             </div>
             <button
               onClick={handleSubmit}
